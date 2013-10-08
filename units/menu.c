@@ -57,10 +57,3 @@ void
 menu_main(void)
 {
 }
-
-int
-main(void)
-{
-  menu_main();
-  return 0;
-}
