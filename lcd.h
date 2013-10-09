@@ -57,6 +57,21 @@
   }				 \
 }
 
+#define LCD_WR_STR(x, y, str)  {        \
+  uint8_t ui1;			        \
+  uint8_t *buf_p = &(lcd_buf[x][0]);	\
+  buf_p += y;				\
+  for (ui1=0; (ui1<LCD_MAX_COL);) {	\
+    if (0 == str[ui1]) {		\
+      buf_p[0] = ' ';			\
+    } else {				\
+      buf_p[0] = str[ui1];		\
+      ui1++;				\
+    }					\
+    buf_p++;				\
+  }					\
+}
+
 #define LCD_WR(x, y, str, len) { \
   uint8_t ui1;			 \
   uint8_t *buf_p = &(lcd_buf[x][0]);		\

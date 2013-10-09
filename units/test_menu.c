@@ -40,8 +40,8 @@ get_key(void)
 void *
 f1(void *x)
 {
+  uint8_t key;
   while (1) {
-    sleep(1);
     get_key();
   }
   pthread_exit(0); 

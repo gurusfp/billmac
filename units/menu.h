@@ -6,6 +6,8 @@
 #define MENU_ITEM_DATE 2
 #define MENU_ITEM_STR  3
 
+#define MENU_NAMES_LEN 12
+
 #define MENU_ITEMS \
   MENU_NAME("Billing     ") COL_JOIN MENU_FUNC(menu_Billing) COL_JOIN \
     ARG1("Id", MENU_ITEM_NUM) COL_JOIN ARG2("Name", MENU_ITEM_STR) ROW_JOIN \
