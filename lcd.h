@@ -1,6 +1,9 @@
 #ifndef LCD_H
 #define LCD_H
 
+#define LCD_MAX_ROW            2
+#define LCD_MAX_COL           16
+
 #define LCD_CMD_DISON_CURON_BLINKON 0x0F /* LCD ON, Cursor ON, Cursor blinking ON */
 #define LCD_CMD_CLRSCR        0x01   /* Clear screen */
 #define LCD_CMD_HOME          0x02   /* Return home */
@@ -19,7 +22,7 @@
 
 #define LCD_busy {  \
   uint8_t i, j;     \
-  for(i=0;i<0x10;i++)	   \
+  for(i=0;i<0x2;i++)	   \
     for(j=0;j<0xFF;j++) {} \
 }
 
@@ -45,11 +48,42 @@
   LCD_en = 0; \
   LCD_busy
 
-#define LCD_DBG_PRINT(str) \
-  LCD_cmd(LCD_CMD_CUR_20); \
-  LCD_sendstring(str)
+#define LCD_CLRSCR {		 \
+  uint8_t ui1;			 \
+  uint8_t *buf_p = (uint8_t *)lcd_buf;		\
+  for (ui1=0; ui1<(LCD_MAX_COL<<1); ui1++) {	\
+    buf_p[0] = ' ';		 \
+    buf_p++;			 \
+  }				 \
+}
 
+#define LCD_WR_STR(x, y, str)  {        \
+  uint8_t ui1;			        \
+  uint8_t *buf_p = &(lcd_buf[x][0]);	\
+  buf_p += y;				\
+  for (ui1=0; (ui1<LCD_MAX_COL);) {	\
+    if (0 == str[ui1]) {		\
+      buf_p[0] = ' ';			\
+    } else {				\
+      buf_p[0] = str[ui1];		\
+      ui1++;				\
+    }					\
+    buf_p++;				\
+  }					\
+}
+
+#define LCD_WR(x, y, str, len) { \
+  uint8_t ui1;			 \
+  uint8_t *buf_p = &(lcd_buf[x][0]);		\
+  buf_p += y;			 \
+  for (ui1=0; ui1<len; ui1++) {	 \
+    buf_p[0] = str[ui1];	 \
+    buf_p++;			 \
+  }				 \
+}
+
+extern uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
 extern void LCD_init(void);
-extern void LCD_sendstring(uint8_t *var);
+extern void LCD_refresh(void);
 
 #endif

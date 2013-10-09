@@ -40,16 +40,16 @@ get_key(void)
 void *
 f1(void *x)
 {
-while (1) {
-sleep(1);
-get_key();
-}
+  uint8_t key;
+  while (1) {
+    get_key();
+  }
   pthread_exit(0); 
 }
 
 void *
 f2(void *x)
 {
-menu_main();
+  menu_main();
   pthread_exit(0); 
 }

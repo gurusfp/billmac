@@ -72,12 +72,24 @@ uint8_t menu_prompts[] = {
 void
 menu_main(void)
 {
-  uint8_t select;
-  do {
-    printf(menu_names[select]);
-    while (0!=KbdHit) {
-      sleep(1);
-    }
-    if (KbdHit < )
-  } while(1);
+  uint8_t prev_menu_selected = 0, menu_selected;
+
+menu_main_start:
+  /* initialize */
+  menu_selected = 0;
+
+  /* Wait until get command from user */
+  while (0 == KbHit) {
+    LCD_WR(1, 0, menu_names[prev_menu_selected], MENU_NAMES_LEN);
+    sleep(1);
+  }
+
+  if (KEY_SC_ENTER == KbHit) {
+  } else {
+    /* could be hotkey for menu */
+  }
+
+  /* recursive call, capture the case when you have unexpected
+     exit */
+  goto menu_main_start;
 }
