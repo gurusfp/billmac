@@ -25,18 +25,16 @@ Timer_Init(void)
   EA  = 1;      /* all interrupts enable */
   ET0 = 1;      /* Enable Timer0 intrs */
   IP  = 0;
-  KbdHit = 0;
   LCD_DBG_PRINT("Int Setup");
 }
-
-//uint8_t gTimer0;
 
 void
 Timer0_isr(void) __interrupt(TF0_VECTOR) __using(1)
 {
   ET0 = 0;     /* Disable Timer0 intrs */
-  if (0 == KbdHit) {
-    KbdHit = KbdScan();
+  /* If Kbd is hit continously */
+  if ( (0 == (0xF0 & KbdHit)) && (0xFF != KBD_RC) ) {
+    KbdScan();
   }
   TF0 = 0;     /* Clear pending interrupt */
   ET0 = 1;     /* Enable Timer0 intrs */
@@ -46,6 +44,7 @@ void
 main(void)
 {
   /* init all */
+  KbdInit();
   LCD_init();
   Timer_Init();
 
@@ -56,7 +55,7 @@ main(void)
     LCD_cmd(LCD_CMD_CUR_10);
     LCD_sendstring("Hello World 4");
 
-    if (0 != KbdHit) {
+    if (0xFF != KbdHit) {
       LCD_cmd(LCD_CMD_CUR_20);
       LCD_sendstring("Got Hit on ");
       LCD_wrchar('a' + KbdHit);

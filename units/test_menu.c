@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-uint8_t  KbdHit;
+uint16_t  KbdHit;
 
 #include "menu.c"
 
@@ -31,7 +31,7 @@ get_key(void)
   printf(" 7   8   9  12\n");
   printf("13  14  15  16\n");
   sscanf("%d", &val);
-  if (0 == KbdHit) {
+  if (0x0000 == (0xF000 & KbdHit)) {
     printf("Processing Kbd key %d", val);
     KbdHit = val;
   }
@@ -40,7 +40,6 @@ get_key(void)
 void *
 f1(void *x)
 {
-  uint8_t key;
   while (1) {
     get_key();
   }

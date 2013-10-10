@@ -69,25 +69,63 @@ uint8_t menu_prompts[] = {
 #undef  ROW_JOIN
 #undef  COL_JOIN
 
+char    menu_prompt_str[] = MENU_PROMPTS;
+
+menu_arg_t arg1, arg2;
+
+void
+menu_getopt(uint8_t *prompt, uint8_t *optopt, menu_arg_t *arg)
+{
+
+}
+
 void
 menu_main(void)
 {
-  uint8_t prev_menu_selected = 0, menu_selected;
+  uint8_t menu_selected, key;
 
-menu_main_start:
   /* initialize */
   menu_selected = 0;
 
+menu_main_start:
   /* Wait until get command from user */
-  while (0 == KbHit) {
-    LCD_WR(1, 0, menu_names[prev_menu_selected], MENU_NAMES_LEN);
-    sleep(1);
+  /* FIXME: Need to shop company name in 0,0 */
+  while (0xFF == KbdHit) {
+    LCD_WR(1, 0, menu_names[menu_selected], MENU_NAMES_LEN);
+    DELAY(0xFF);
   }
 
-  if (KEY_SC_ENTER == KbHit) {
+  if (KEY_SC_ENTER == KbdHit) {
+    menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), menu_args+(menu_selected<<1), &arg1);
+    menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), menu_args+((menu_selected<<1)+1), &arg2);
+    menu_call();
+  } else if (KEY_SC_LEFT == KbdHit) {
+    menu_selected--;
+    key = MENU_MAX - 1;
+  } else if (KEY_SC_RIGHT == KbdHit) {
+    menu_selected++;
+    key = 0;
   } else {
     /* could be hotkey for menu */
+    menu_selected *= 10;
+
+    /* Critical section : disable any keypress now */
+    ET0 = 0;
+    key = (KbdHit & 0xF0)>>4;
+    if (0xF == key) {
+      key = KbdHit & 0xF;
+      KbdHit = 0xFF;
+    } else {
+      KbdHit |= 0xF0;
+    }
+    ET0 = 1;
+
+    menu_selected += key;
   }
+
+  /* handle out of bounds */
+  if (menu_selected >= MENU_MAX)
+    menu_selected = key;
 
   /* recursive call, capture the case when you have unexpected
      exit */
