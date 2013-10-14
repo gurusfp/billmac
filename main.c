@@ -33,7 +33,7 @@ Timer0_isr(void) __interrupt(TF0_VECTOR) __using(1)
 {
   ET0 = 0;     /* Disable Timer0 intrs */
   /* If Kbd is hit continously */
-  if ( (0 == (0xF0 & KbdHit)) && (0xFF != KBD_RC) ) {
+  if ( (0xFF != KBD_RC) || ((0 == KbdDataAvail) && (0xFF != KbdData)) ) {
     KbdScan();
   }
   TF0 = 0;     /* Clear pending interrupt */
@@ -47,6 +47,9 @@ main(void)
   KbdInit();
   LCD_init();
   Timer_Init();
+  
+
+  /* */
 
   while(1) {
     DELAY(255);
@@ -55,11 +58,11 @@ main(void)
     LCD_cmd(LCD_CMD_CUR_10);
     LCD_sendstring("Hello World 4");
 
-    if (0xFF != KbdHit) {
+    if (0xFF != KbdData) {
       LCD_cmd(LCD_CMD_CUR_20);
       LCD_sendstring("Got Hit on ");
-      LCD_wrchar('a' + KbdHit);
-      KbdHit = 0;
+      LCD_wrchar('a' + KbdData);
+      KbdData = 0;
     } else {
       LCD_cmd(LCD_CMD_CUR_20);
       LCD_sendstring("No Kbd Hit");

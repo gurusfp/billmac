@@ -57,7 +57,7 @@
   }				 \
 }
 
-#define LCD_WR_STR(x, y, str)  {        \
+#define LCD_WR_LINE(x, y, str)  {        \
   uint8_t ui1;			        \
   uint8_t *buf_p = &(lcd_buf[x][0]);	\
   buf_p += y;				\
@@ -69,6 +69,27 @@
       ui1++;				\
     }					\
     buf_p++;				\
+  }					\
+}
+
+#define LCD_WR_LINE(x, y, str, len)  {	\
+  uint8_t ui1;			        \
+  uint8_t *buf_p = &(lcd_buf[x][0]);	\
+  buf_p += y;				\
+  for (ui1=0; (ui1<len); ui1++) {	\
+    buf_p[0] = str[ui1];		\
+    buf_p++;				\
+  }					\
+  for (; ui1<LCD_MAX_COL; ui1++) {	\
+    buf_p[0] = ' ';			\
+    buf_p++;				\
+  }					\
+}
+
+#define LCD_SCROLL {			\
+  uint8_t ui1;				\
+  for (ui1=0; ui1<LCD_MAX_COL; ui1++) {	\
+    buf_p[0][ui1] = buf_p[1][ui1];	\
   }					\
 }
 

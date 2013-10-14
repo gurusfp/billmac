@@ -29,8 +29,19 @@
 #define KEY_SC_ENTER    13
 #define KEY_SC_INVALID  15
 
+#define KBD_GET_KEY          \
+  key = KbdData & 0xF;        \
+  key_n = (KbdData>>4)&0x7;   \
+  key_s = (KbdData&0x80);
+
+#define KBD_RESET_KEY          \
+  KbdDataAvail = 0
+
+#define KBD_HIT      (0x0 != KbdDataAvail)
+#define KBD_NOT_HIT  (0x0 == KbdDataAvail)
+
 extern void    KbdInit(void);
 extern uint8_t KbdScan(void);
-extern uint8_t KbdHit;
+extern uint8_t KbdData;
 
 #endif
