@@ -17,12 +17,8 @@ struct ep_store_layout {
   uint8_t   shop_name[12];          /*            12 */
   uint8_t   prn_header[64];         /*            64 */
   uint8_t   prn_footer[24];         /*            24 */
-  uint8_t   data_signature;         /*             1 */
-} ep_layout;                        /* Total  = 7822 */
-
-typedef union {
-  uint8_t bytes[1<<13]; /* 8K bytes */
-  ep_store_layout ep_layout;
-} ep_store;
+  uint16_t  eeprom_sig;             /*             2 */
+  uint16_t  flash_sig;              /*             2 */
+} ep_layout;                        /* Total  = 7825 */
 
 #endif
