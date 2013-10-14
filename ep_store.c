@@ -3,3 +3,9 @@
 
 #include "ep_store.h"
 
+void
+ep_store_init(void)
+{
+  
+}
+

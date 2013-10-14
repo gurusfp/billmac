@@ -3,11 +3,13 @@
 
 typedef struct {
   uint8_t   name[12];
-  uint16_t  has_serv_tax:1;
+  uint16_t  is_valid:1;
   uint16_t  is_deleted:1;
-  uint16_t  cost:14;
-  uint16_t  na0:2;
-  uint16_t  discount:14;
+  uint16_t  na0:1;
+  uint16_t  cost:13;
+  uint16_t  has_serv_tax:1;
+  uint16_t  vat_sel:2;
+  uint16_t  discount:13;
   uint8_t   quantity[4];
 } item;
 
@@ -29,7 +31,15 @@ typedef struct {
 
   uint16_t  date;
 
-  sale_item items[16]; /* max that could be possible */
+  sale_item items[16]; /* max item in 1 bill */
 } sale_info;
+
+/* checks */
+#if 2 != sizeof(sale_item)
+#error "sale item not packed into 2 bytes"
+#endif
+#if 20 != sizeof(item)
+#error "item not packed in 20 bytes"
+#endif
 
 #endif
