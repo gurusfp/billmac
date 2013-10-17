@@ -1,9 +1,10 @@
 #include <stdint.h>
 #include <p89v51rd2.h>
 
+#include "lcd.h"
 #include "menu.h"
 
-#define ROW_JOIN ,
+#define ROW_JOIN
 #define COL_JOIN
 #define MENU_MODE(A)
 #define MENU_NAME(A) A
@@ -83,22 +84,209 @@ menu_arg_t arg1, arg2;
 uint8_t    menu_error;
 
 void
+menu_unimplemented(void)
+{
+  assert(0);
+}
+
+void
+menu_Billing(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_ShowBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DupBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DeleteBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_ValidatePaswd(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_AddItem(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_ModItem(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DayItemBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DayAllBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DayBillPrned(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DayDupBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DayTaxReport(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_MonItemBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_MonAllBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_MonBillPrned(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_MonTaxReport(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_AllItemBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_AllFullBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_TaxReport(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_ModVat(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_Header(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_Footer(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_DelAllBill(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_SetPasswd(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_SetServTax(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_SetDateTime(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+void
+menu_RunDiag(uint8_t mode)
+{
+  menu_unimplemented();
+}
+
+#define ROW_JOIN ,
+#define COL_JOIN
+#define MENU_MODE(A)
+#define MENU_NAME(A)
+#define MENU_FUNC(A) A
+#define ARG1(A, B)
+#define ARG2(A, B)
+menu_func_t menu_handlers[] = {
+  MENU_ITEMS
+};
+#undef  ARG2
+#undef  ARG1
+#undef  MENU_FUNC
+#undef  MENU_NAME
+#undef  MENU_MODE
+#undef  ROW_JOIN
+#undef  COL_JOIN
+
+void
 menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 {
   uint8_t key, key_n, key_s, col_id;
+  uint8_t str[LCD_MAX_COL];
+
   if (MENU_ITEM_NONE == opt) return;
 
   /* init */
-  for (col_id=0; col_id<LCD_MAX_COL; col_id++)
-    arg->str[col_id] = 0;
+  LCD_CLRSCR
   
   /* Ask a question */
-  LCD_WR_LINE(0, 0, prompt, 4);
-  LCD_WR(0, 5, '?', 1);
+  LCD_WR_LINE_N(0, 0, prompt, 4);
+  LCD_WR(0, 5, "?", 1);
 
   /* Set the prompt */
   LCD_cmd(LCD_CMD_CUR_20);
-  LCD_WR_LINE(0, 0, prompt, 0);
+  LCD_WR_LINE_N(0, 0, prompt, 0);
   col_id = 0;
   uint8_t *lp = &(lcd_buf[1][0]);
 
@@ -112,7 +300,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
     /* abc def ghi
        jkl mno pqr
        stu vwx yz */
-    switch (KbdHit) {
+    switch (KbdData) {
     case KEY_SC_LEFT:
       if (col_id == 0) {
 	break;
@@ -141,7 +329,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   uint32_t val = 0;
 
   menu_error = 0;
-  if ((MENU_ITEM_NUM == item_type) || (MENU_ITEM_FLOAT == item_type)) {
+  if ((MENU_ITEM_ID == item_type) || (MENU_ITEM_FLOAT == item_type)) {
     while (lbp[0]) {
       if ((lbp[0] >= '0') && (lbp[0] <= '9')) {
 	val *= 10;
@@ -230,7 +418,7 @@ menu_main(void)
 menu_main_start:
   /* Wait until get command from user */
   LCD_WR_LINE(0, 0, "Demo App FIXME");  /* FIXME: Need to shop company name in 0,0 */
-  LCD_WR_LINE(1, 0, menu_names[menu_selected], MENU_NAMES_LEN);
+  LCD_WR_LINE_N(1, 0, menu_names[menu_selected], MENU_NAMES_LEN);
   while KBD_NOT_HIT {
     DELAY(0xFF);
   }
@@ -261,156 +449,3 @@ menu_main_start:
      exit */
   goto menu_main_start;
 }
-
-void
-menu_Billing(uint8_t mode)
-{
-}
-
-void
-menu_ShowBill(uint8_t mode)
-{
-}
-
-void
-menu_DupBill(uint8_t mode)
-{
-}
-
-void
-menu_DeleteBill(uint8_t mode)
-{
-}
-
-void
-menu_ValidatePaswd(uint8_t mode)
-{
-}
-
-void
-menu_AddItem(uint8_t mode)
-{
-}
-
-void
-menu_ModItem(uint8_t mode)
-{
-}
-
-void
-menu_DayItemBill(uint8_t mode)
-{
-}
-
-void
-menu_DayAllBill(uint8_t mode)
-{
-}
-
-void
-menu_DayBillPrned(uint8_t mode)
-{
-}
-
-void
-menu_DayDupBill(uint8_t mode)
-{
-}
-
-void
-menu_DayTaxReport(uint8_t mode)
-{
-}
-
-void
-menu_MonItemBill(uint8_t mode)
-{
-}
-
-void
-menu_MonAllBill(uint8_t mode)
-{
-}
-
-void
-menu_MonBillPrned(uint8_t mode)
-{
-}
-
-void
-menu_MonTaxReport(uint8_t mode)
-{
-}
-
-void
-menu_AllItemBill(uint8_t mode)
-{
-}
-
-void
-menu_AllFullBill(uint8_t mode)
-{
-}
-
-void
-menu_TaxReport(uint8_t mode)
-{
-}
-
-void
-menu_ModVat(uint8_t mode)
-{
-}
-
-void
-menu_Header(uint8_t mode)
-{
-}
-
-void
-menu_Footer(uint8_t mode)
-{
-}
-
-void
-menu_DelAllBill(uint8_t mode)
-{
-}
-
-void
-menu_SetPasswd(uint8_t mode)
-{
-}
-
-void
-menu_SetServTax(uint8_t mode)
-{
-}
-
-void
-menu_SetDateTime(uint8_t mode)
-{
-}
-
-void
-menu_RunDiag(uint8_t mode)
-{
-}
-
-#define ROW_JOIN ,
-#define COL_JOIN
-#define MENU_MODE(A)
-#define MENU_NAME(A)
-#define MENU_FUNC(A) A
-#define ARG1(A, B)
-#define ARG2(A, B)
-menu_func_t menu_handlers[] = {
-  MENU_ITEMS
-};
-#undef  ARG2
-#undef  ARG1
-#undef  MENU_FUNC
-#undef  MENU_NAME
-#undef  MENU_MODE
-#undef  ROW_JOIN
-#undef  COL_JOIN

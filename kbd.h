@@ -43,5 +43,6 @@
 extern void    KbdInit(void);
 extern uint8_t KbdScan(void);
 extern uint8_t KbdData;
+extern uint8_t KbdDataAvail;
 
 #endif
