@@ -83,6 +83,22 @@ char    menu_prompt_str[] = MENU_PROMPTS;
 menu_arg_t arg1, arg2;
 uint8_t    menu_error;
 
+#define KCHAR_ROWS        10
+#define KCHAR_COLS         9
+#define KCHAR_SHIFT_SZ     5
+uint8_t keyChars[] = {
+  '0', ' ', '.', ',', ')', '+', '?', '_', ':',
+  '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
+  '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '`',
+  '3', 'g', 'h', 'i', '#', 'G', 'H', 'I', '{',
+  '4', 'j', 'k', 'l', '$', 'J', 'K', 'L', '}',
+  '5', 'm', 'n', 'o', '%', 'M', 'N', 'O', '|',
+  '6', 'p', 'q', 'r', '^', 'P', 'Q', 'R', '\\',
+  '7', 's', 't', 'u', '&', 'S', 'T', 'U', '/',
+  '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
+  '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
+};
+
 void
 menu_unimplemented(void)
 {
@@ -297,9 +313,6 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
     }
     KBD_GET_KEY;
 
-    /* abc def ghi
-       jkl mno pqr
-       stu vwx yz */
     switch (KbdData) {
     case KEY_SC_LEFT:
       if (col_id == 0) {
@@ -313,13 +326,15 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       lp[0] = 0;
       col_id++;
       break;
+    case KEY_SC_RIGHT:
+    case KEY_SC_PRINT:
+    case KEY_SC_INVALID:
+      break;
     default:
-      if ((0 == key_s) && (0 == key_n))
-	lp[0] = '0' + key;
-      else if (0 == key_s)
-	lp[0] = 'a' + key + key_n - 1;
-      else
-	lp[0] = 'A' + key + key_n - 1;
+      key *= KCHAR_COLS;
+      if (key_s) key += KCHAR_SHIFT_SZ;
+      key += key_n;
+      lp[0] = keyChars[key];
       lp++; col_id++;
     }
   } while ((col_id < LCD_MAX_COL) &&  (key != KEY_SC_ENTER));
@@ -402,9 +417,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   } else ASSERT(0);
 
   /* */
-  if (menu_error) {
-    ASSERT(0 == menu_error);
-  }
+  ASSERT(0 == menu_error);
 }
 
 void

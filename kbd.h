@@ -40,7 +40,6 @@
 #define KBD_HIT      (0x0 != KbdDataAvail)
 #define KBD_NOT_HIT  (0x0 == KbdDataAvail)
 
-extern uint8_t keyChars[];
 extern void    KbdInit(void);
 extern uint8_t KbdScan(void);
 extern uint8_t KbdData;

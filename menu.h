@@ -124,6 +124,7 @@ typedef union {
 #undef  ROW_JOIN
 #undef  COL_JOIN
 
+extern uint8_t keyChars[];
 extern uint8_t menu_error;
 
 #endif

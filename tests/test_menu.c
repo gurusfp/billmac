@@ -7,6 +7,10 @@
 #include "kbd.c"
 #include "menu.c"
 
+#define KBD_SHIFT                0x80
+#define KBD_KEY_TIMES(N)   ((N-1)<<4)
+#define KBD_KEY(N)                  N
+
 void *
 f1(void *x)
 {
