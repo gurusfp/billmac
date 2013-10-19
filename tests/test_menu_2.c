@@ -3,10 +3,11 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "kbd.h"
 
-uint8_t test_key_idx = 0;
+uint8_t test_key_idx = -1;
 uint8_t *test_key = NULL;
 
 #define INIT_TEST_KEYS(A) do { test_key = A; test_key_idx = 0; } while (0)
@@ -19,28 +20,45 @@ uint8_t kbd_reverse_map(uint8_t);
 void
 get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 {
+  static uint8_t do_correct = 0;
+
   if (0 != KbdData) /* not yet consumed the old data */
     return;
-  if (0 == test_key[test_key_idx]) { /* completed */
-    if (test_key_idx) {
-      KbdData = KEY_SC_ENTER;
-      *p_key = KEY_SC_ENTER;
-      *p_key_n = 1;
-      test_key_idx = 0;
-    }
+  if (-1 == test_key_idx) /* no data yet */
+    return;
+  if ((0 == test_key[test_key_idx]) && (0 == do_correct)) { /* completed */
+    assert (test_key_idx);
+    assert (-1 != test_key_idx);
+    KbdData = KEY_SC_ENTER;
+    *p_key = KEY_SC_ENTER;
+    *p_key_n = 1;
+    *p_key_s = 0;
+    test_key_idx = -1;
     return;
   }
 
   KbdData = kbd_reverse_map(test_key[test_key_idx]);
   test_key_idx++;
-  if (0 == (rand % 5)) {
+  if (2 <= do_correct) {
+    do_correct = 0;
+    printf("Added correct key\n");
+  } else if (1 == do_correct) {
     KbdData = KEY_SC_LEFT;
+    test_key_idx--;
+    do_correct++;
+    printf("Added back key\n");
+  } else if ((0 == do_correct) && (0 == (rand() % 2))) {
+    KbdData = 'a' + (rand() % 26);
+    printf("Added random key: %c\n", KbdData);
+    do_correct++;
+    test_key_idx--;
   }
   uint8_t key, key_n, key_s;
   KBD_GET_KEY;
   *p_key = key;
   *p_key_n = key_n;
   *p_key_s = key_s;
+  printf("do_correct:%d\n", do_correct);
 }
 
 /* Redefine certain macros for testing purpose */
@@ -50,12 +68,14 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 #define KBD_GET_KEY get_test_key(&key, &key_n, &key_s)
 
 #include "kbd.c"
+#include "lcd.c"
 #include "menu.c"
 
 uint8_t
 kbd_reverse_map(uint8_t in)
 {
-  for (uint8_t ui1=0; ui1<(KCHAR_ROWS*KCHAR_COLS); ui1++) {
+  uint8_t ui1;
+  for (ui1=0; ui1<(KCHAR_ROWS*KCHAR_COLS); ui1++) {
     if (in == keyChars[ui1]) {
       uint8_t ret, ui2;
       ret = ui1/KCHAR_COLS;
@@ -65,19 +85,108 @@ kbd_reverse_map(uint8_t in)
 	ret |= KBD_SHIFT;
       }
       ret |= ui2<<4;
+      printf("kbd_reverse_map:0x%x\n", ret);
       return ret;
     }
   }
   assert(0);
 }
 
+uint8_t inp[LCD_MAX_COL];
 int
 main(void)
 {
-  srand(time());
+  uint32_t loop;
+  uint8_t ui1;
+
+  srand(time(NULL));
+
   /* test string */
-  INIT_TEST_KEYS("Hello World");
-  menu_main();
+/*   for (loop=0; loop<1000; loop++) { */
+/*     for (ui1=0; ui1<LCD_MAX_COL/2; ui1++) { */
+/*       if (0 == (rand() % 3)) */
+/* 	inp[ui1] = 'A' + (rand()%26); */
+/*       else */
+/* 	inp[ui1] = 'a' + (rand()%26); */
+/*     } */
+/*     INIT_TEST_KEYS(inp); */
+/*     menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR); */
+/* #ifdef DEBUG */
+/*     for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/*       putchar(lcd_buf[0][ui1]); */
+/*     putchar('\n'); */
+/*     for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/*       putchar(lcd_buf[1][ui1]); */
+/*     putchar('\n'); */
+/* #endif */
+/*     assert(0 == strncmp("Prom ?          ", lcd_buf, LCD_MAX_COL)); */
+/*     assert(0 == strncmp(inp, lcd_buf[1], LCD_MAX_COL/2)); */
+/*     if (0 != strncmp(inp, lcd_buf[1], LCD_MAX_COL/2)) { */
+/*       printf("lcd_buf:"); */
+/*       for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/* 	printf("%c ", lcd_buf[1][ui1]); */
+/*       printf("\ninp:"); */
+/*       for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/* 	printf("%c ", inp[ui1]); */
+/*       printf("\n"); */
+/*     } */
+/*     assert(0 == strncmp("        ", lcd_buf[0]+LCD_MAX_COL+LCD_MAX_COL/2, LCD_MAX_COL/2)); */
+/*     if (0 != strncmp("        ", lcd_buf[0]+LCD_MAX_COL+LCD_MAX_COL/2, LCD_MAX_COL/2)) { */
+/*       printf("\ninp:"); */
+/*       for (ui1=0; ui1<LCD_MAX_COL/2; ui1++) */
+/* 	printf("%c ", (lcd_buf[0]+LCD_MAX_COL+LCD_MAX_COL/2)[ui1]); */
+/*       printf("\n"); */
+/*     } */
+/*   } */
+
+  /* */
+/*   for (loop=0; loop<1000; loop++) { */
+/*     for (ui1=0; ui1<LCD_MAX_COL; ui1++) { */
+/*       if (0 == (rand() % 3)) */
+/* 	inp[ui1] = 'A' + (rand()%26); */
+/*       else */
+/* 	inp[ui1] = 'a' + (rand()%26); */
+/*     } */
+/*     INIT_TEST_KEYS(inp); */
+/*     printf("After construction:%s\n", inp); */
+/*     menu_getopt("mlpsdlfjlalkjf", &arg1, MENU_ITEM_STR); */
+/*     printf("After getopt:%s\n", inp); */
+/* #ifdef DEBUG */
+/*     for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/*       putchar(lcd_buf[0][ui1]); */
+/*     putchar('\n'); */
+/*     for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/*       putchar(lcd_buf[1][ui1]); */
+/*     putchar('\n'); */
+/* #endif */
+/*     assert(0 == strncmp("mlps ?          ", lcd_buf, LCD_MAX_COL)); */
+/*     assert(0 == strncmp(inp, lcd_buf[1], LCD_MAX_COL)); */
+/*     if (0 != strncmp(inp, lcd_buf[1], LCD_MAX_COL)) { */
+/*       printf("lcd_buf:"); */
+/*       for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/* 	printf("%c ", lcd_buf[1][ui1]); */
+/*       printf("\ninp:"); */
+/*       for (ui1=0; ui1<LCD_MAX_COL; ui1++) */
+/* 	printf("%c ", inp[ui1]); */
+/*       printf("\n"); */
+/*     } */
+/*   } */
+
+  /* integer */
+  uint32_t r1 = rand(), r2;
+  uint8_t  s[8], ui2;
+  r2 = r1;
+  for (ui1=0; r1; ui1++) {
+    s[ui1] = '0' + r1%10;
+    r1 /= 10;
+  }
+  inp[ui1] = 0;
+  for (ui2=0;ui1;ui1--, ui2++) {
+    inp[ui1-1] = s[ui2];
+  }
+  INIT_TEST_KEYS(inp);
+  menu_getopt("lsjdflkjf", &arg1, MENU_ITEM_ID);
+  assert(r2 == arg1.integer);
 
   return 0;
 }

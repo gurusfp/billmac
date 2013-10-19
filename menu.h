@@ -108,22 +108,6 @@ typedef union {
   MENU_MODE(MENU_MRESET) MENU_NAME("Run Diagnost") COL_JOIN MENU_FUNC(menu_RunDiag) COL_JOIN \
     ARG1(MENU_PR_ID, MENU_ITEM_NONE) COL_JOIN ARG2(MENU_PR_ID, MENU_ITEM_NONE)
 
-#define ROW_JOIN +
-#define COL_JOIN
-#define MENU_MODE(A)
-#define MENU_NAME(A)
-#define MENU_FUNC(A) 1
-#define ARG1(A, B)
-#define ARG2(A, B)
-#define MENU_MAX ( MENU_ITEMS )
-#undef  ARG2
-#undef  ARG1
-#undef  MENU_FUNC
-#undef  MENU_NAME
-#undef  MENU_MODE
-#undef  ROW_JOIN
-#undef  COL_JOIN
-
 extern uint8_t keyChars[];
 extern uint8_t menu_error;
 

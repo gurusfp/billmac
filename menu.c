@@ -11,9 +11,7 @@
 #define MENU_FUNC(A)
 #define ARG1(A, B)
 #define ARG2(A, B)
-char *menu_names = {
-  MENU_ITEMS
-};
+uint8_t *menu_names = MENU_ITEMS;
 #undef  ARG2
 #undef  ARG1
 #undef  MENU_FUNC
@@ -22,7 +20,7 @@ char *menu_names = {
 #undef  ROW_JOIN
 #undef  COL_JOIN
 
-typedef void menu_func_t(uint8_t mode);
+typedef void (*menu_func_t)(uint8_t mode);
 
 #define ROW_JOIN ,
 #define COL_JOIN
@@ -70,6 +68,22 @@ uint8_t menu_prompts[] = {
 uint8_t menu_mode[] = {
   MENU_ITEMS
 };
+#undef  ARG2
+#undef  ARG1
+#undef  MENU_FUNC
+#undef  MENU_NAME
+#undef  MENU_MODE
+#undef  ROW_JOIN
+#undef  COL_JOIN
+
+#define ROW_JOIN +
+#define COL_JOIN
+#define MENU_MODE(A)
+#define MENU_NAME(A)
+#define MENU_FUNC(A) 1
+#define ARG1(A, B)
+#define ARG2(A, B)
+const uint8_t MENU_MAX = MENU_ITEMS;
 #undef  ARG2
 #undef  ARG1
 #undef  MENU_FUNC
@@ -302,7 +316,6 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 
   /* Set the prompt */
   LCD_cmd(LCD_CMD_CUR_20);
-  LCD_WR_LINE_N(0, 0, prompt, 0);
   col_id = 0;
   uint8_t *lp = &(lcd_buf[1][0]);
 
@@ -323,7 +336,6 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       LCD_cmd(LCD_CMD_CUR_20|col_id);
       break;
     case KEY_SC_ENTER:
-      lp[0] = 0;
       col_id++;
       break;
     case KEY_SC_RIGHT:
@@ -337,9 +349,12 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       lp[0] = keyChars[key];
       lp++; col_id++;
     }
-  } while ((col_id < LCD_MAX_COL) &&  (key != KEY_SC_ENTER));
+    if (KEY_SC_ENTER != key) {
+      KbdData = 0;
+    }
+  } while (key != KEY_SC_ENTER);
 
-  uint8_t item_type = (opt&MENU_ITEM_TYPE_MASK);
+  uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
   uint8_t *lbp = &(lcd_buf[1][0]);
   uint32_t val = 0;
 
@@ -414,10 +429,10 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       arg->time.min = val;
     }
   } else if (MENU_ITEM_STR == item_type) {
-  } else ASSERT(0);
+  } else assert(0);
 
   /* */
-  ASSERT(0 == menu_error);
+  assert(0 == menu_error);
 }
 
 void
@@ -431,7 +446,7 @@ menu_main(void)
 menu_main_start:
   /* Wait until get command from user */
   LCD_WR_LINE(0, 0, "Demo App FIXME");  /* FIXME: Need to shop company name in 0,0 */
-  LCD_WR_LINE_N(1, 0, menu_names[menu_selected], MENU_NAMES_LEN);
+  LCD_WR_LINE_N(1, 0, (menu_names+(menu_selected*MENU_NAMES_LEN)), MENU_NAMES_LEN);
   while KBD_NOT_HIT {
     DELAY(0xFF);
   }
@@ -441,7 +456,7 @@ menu_main_start:
   if (KEY_SC_ENTER == key) {
     menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
     menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
-    (*menu_handlers)();
+    (*menu_handlers)(menu_args[((menu_selected<<1)+1)]);
   } else if (KEY_SC_LEFT == key) {
     menu_selected--;
     key = MENU_MAX - 1;

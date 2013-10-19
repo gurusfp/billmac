@@ -1,6 +1,6 @@
 .PHONY:
 
-CFLAGS = -I. -I.. -DUNIT_TEST
+CFLAGS = -I. -I.. -DUNIT_TEST -DDEBUG
 CC = gcc
 VPATH = .:..
 

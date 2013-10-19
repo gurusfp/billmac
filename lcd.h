@@ -75,39 +75,39 @@ uint8_t _lcd_idx = 0;
 
 #define LCD_CLRSCR {		 \
   uint8_t ui1;			 \
-  uint8_t *lcd_buf = (uint8_t *)lcd_buf;		\
+  uint8_t *buf_p = (uint8_t *)lcd_buf;		\
   for (ui1=0; ui1<(LCD_MAX_COL<<1); ui1++) {	\
-    lcd_buf[0] = ' ';		 \
-    lcd_buf++;			 \
+    buf_p[0] = ' ';		 \
+    buf_p++;			 \
   }				 \
 }
 
 #define LCD_WR_LINE(x, y, str)  {        \
   uint8_t ui1;			        \
-  uint8_t *lcd_buf = &(lcd_buf[x][0]);	\
-  lcd_buf += y;				\
+  uint8_t *buf_p = &(lcd_buf[x][0]);	\
+  buf_p += y;				\
   for (ui1=0; (ui1<LCD_MAX_COL);) {	\
     if (0 == str[ui1]) {		\
-      lcd_buf[0] = ' ';			\
+      buf_p[0] = ' ';			\
     } else {				\
-      lcd_buf[0] = str[ui1];		\
+      buf_p[0] = str[ui1];		\
       ui1++;				\
     }					\
-    lcd_buf++;				\
+    buf_p++;				\
   }					\
 }
 
 #define LCD_WR_LINE_N(x, y, str, len)  {	\
   uint8_t ui1;			        \
-  uint8_t *lcd_buf = &(lcd_buf[x][0]);	\
-  lcd_buf += y;				\
+  uint8_t *buf_p = &(lcd_buf[x][0]);	\
+  buf_p += y;				\
   for (ui1=0; (ui1<len); ui1++) {	\
-    lcd_buf[0] = str[ui1];		\
-    lcd_buf++;				\
+    buf_p[0] = str[ui1];		\
+    buf_p++;				\
   }					\
   for (; ui1<LCD_MAX_COL; ui1++) {	\
-    lcd_buf[0] = ' ';			\
-    lcd_buf++;				\
+    buf_p[0] = ' ';			\
+    buf_p++;				\
   }					\
 }
 
