@@ -326,6 +326,9 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
     }
     KBD_GET_KEY;
 
+    /* Don't overflow buffer */
+    if (col_id > 15) col_id = 15;
+
     switch (KbdData) {
     case KEY_SC_LEFT:
       if (col_id == 0) {
@@ -357,22 +360,24 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
   uint8_t *lbp = &(lcd_buf[1][0]);
   uint32_t val = 0;
+  uint8_t ui1;
 
-  menu_error = 0;
+  menu_error = 1;
   if ((MENU_ITEM_ID == item_type) || (MENU_ITEM_FLOAT == item_type)) {
-    while (lbp[0]) {
+    for (ui1=0; ui1<col_id; ui1++) {
       if ((lbp[0] >= '0') && (lbp[0] <= '9')) {
 	val *= 10;
 	val += lbp[0] - '0';
+	menu_error = 0;
       } else {
-	menu_error++;
+	break;
       }
       lbp++;
     }
     arg->integer = val;
   } else if ((MENU_ITEM_DATE == item_type) || (MENU_ITEM_MONTH == item_type)) {
     /* format DDMMYYYY || format MMYYYY */
-    uint8_t ui1;
+    menu_error = 0;
     for (ui1=0; ui1<(item_type+2); ui1++) { /* cleaverly spaced item_type apart */
       if ((lbp[ui1] < '0') || (lbp[ui1] > '9'))
 	menu_error++;
@@ -407,6 +412,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   } else if (MENU_ITEM_TIME == item_type) {
     /* format HHMM */
     uint8_t ui1;
+    menu_error = 0;
     for (ui1=0; ui1<4; ui1++) {
       if ((lbp[ui1] < '0') || (lbp[ui1] > '9'))
 	menu_error++;
@@ -433,6 +439,39 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 
   /* */
   assert(0 == menu_error);
+}
+
+uint8_t
+menu_getyesno(uint8_t q)
+{
+  uint8_t ret = 0;
+  do {
+    ret++;
+
+    LCD_WR_LINE(1, 0, q);
+    if (ret&1)
+      LCD_WR("Yes");
+    else
+      LCD_WR("No");
+
+    while KBD_NOT_HIT {
+      sleep(10);
+    }
+    KBD_GET_KEY;
+
+    switch (KbdData) {
+    case KEY_SC_LEFT:
+    case KEY_SC_RIGHT:
+      break;
+    case KEY_SC_ENTER:
+      return ret&1;
+      break;
+    default:
+      ret--;
+      break;
+    }
+  } while (1);
+  assert (0);
 }
 
 void
