@@ -24,11 +24,11 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 
   if (0 != KbdData) /* not yet consumed the old data */
     return;
-  if (-1 == test_key_idx) /* no data yet */
+  if (0xFF == test_key_idx) /* no data yet */
     return;
   if ((0 == test_key[test_key_idx]) && (0 == do_correct)) { /* completed */
     assert (test_key_idx);
-    assert (-1 != test_key_idx);
+    assert (0xFF != test_key_idx);
     KbdData = KEY_SC_ENTER;
     *p_key = KEY_SC_ENTER;
     *p_key_n = 1;
@@ -41,15 +41,15 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
   test_key_idx++;
   if (2 <= do_correct) {
     do_correct = 0;
-    printf("Added correct key\n");
+    //    printf("Added correct key\n");
   } else if (1 == do_correct) {
     KbdData = KEY_SC_LEFT;
     test_key_idx--;
     do_correct++;
-    printf("Added back key\n");
+    //    printf("Added back key\n");
   } else if ((0 == do_correct) && (0 == (rand() % 2))) {
     KbdData = 'a' + (rand() % 26);
-    printf("Added random key: %c\n", KbdData);
+    //    printf("Added random key: %c\n", KbdData);
     do_correct++;
     test_key_idx--;
   }
@@ -58,7 +58,7 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
   *p_key = key;
   *p_key_n = key_n;
   *p_key_s = key_s;
-  printf("do_correct:%d\n", do_correct);
+  //  printf("do_correct:%d\n", do_correct);
 }
 
 /* Redefine certain macros for testing purpose */
@@ -85,7 +85,7 @@ kbd_reverse_map(uint8_t in)
 	ret |= KBD_SHIFT;
       }
       ret |= ui2<<4;
-      printf("kbd_reverse_map:0x%x\n", ret);
+      //      printf("kbd_reverse_map:0x%x\n", ret);
       return ret;
     }
   }
@@ -173,20 +173,72 @@ main(void)
 /*   } */
 
   /* integer */
-  uint32_t r1 = rand(), r2;
-  uint8_t  s[8], ui2;
-  r2 = r1;
-  for (ui1=0; r1; ui1++) {
-    s[ui1] = '0' + r1%10;
-    r1 /= 10;
+  /* for (loop=0; loop<1000; loop++) { */
+  /*   printf("loop:%d\n", loop); */
+  /*   uint32_t r1 = rand(), r2; */
+  /*   uint8_t  s[16], ui2; */
+  /*   r2 = r1; */
+  /*   for (ui1=0; r1; ui1++) { */
+  /*     s[ui1] = '0' + r1%10; */
+  /*     r1 /= 10; */
+  /*   } */
+  /*   inp[ui1] = 0; */
+  /*   for (ui2=0;ui1;ui1--, ui2++) { */
+  /*     inp[ui1-1] = s[ui2]; */
+  /*   } */
+  /*   INIT_TEST_KEYS(inp); */
+  /*   menu_getopt("lsjdflkjf", &arg1, MENU_ITEM_ID); */
+  /*   printf("r2:0x%x arg1.integer:0x%x\n", r2, arg1.integer); */
+  /*   assert(r2 == arg1.integer); */
+  /* } */
+
+  /* date DDMMYYYY */
+  /* for (loop=0; loop<1000; loop++) { */
+  /*   uint8_t date, month, year; */
+  /*   date = 1 + (rand() % 28); */
+  /*   month = 1 + (rand() % 12); */
+  /*   year = rand() % 100; */
+  /*   sprintf(inp, "%02d%02d%04d", date, month, 2000+year); */
+  /*   INIT_TEST_KEYS(inp); */
+  /*   menu_getopt("dflkjf", &arg1, MENU_ITEM_DATE); */
+  /*   printf("string:%s\n", inp); */
+  /*   printf("date:%d org:%d\n", arg1.date.date, date); */
+  /*   printf("month:%d org:%d\n", arg1.date.month, month); */
+  /*   printf("year:%d org:%d\n", arg1.date.year, year); */
+  /*   assert(date == arg1.date.date); */
+  /*   assert(month == arg1.date.month); */
+  /*   assert(year == arg1.date.year); */
+  /* } */
+
+  /* month MMYYYY */
+  /* for (loop=0; loop<1000; loop++) { */
+  /*   uint8_t month, year; */
+  /*   month = 1 + (rand() % 12); */
+  /*   year = rand() % 100; */
+  /*   sprintf(inp, "%02d%04d", month, 2000+year); */
+  /*   INIT_TEST_KEYS(inp); */
+  /*   menu_getopt("kjslfjklsdlff", &arg1, MENU_ITEM_MONTH); */
+  /*   printf("string:%s\n", inp); */
+  /*   printf("month:%d org:%d\n", arg1.date.month, month); */
+  /*   printf("year:%d org:%d\n", arg1.date.year, year); */
+  /*   assert(month == arg1.date.month); */
+  /*   assert(year == arg1.date.year); */
+  /* } */
+
+  /* Time HHMM */
+  for (loop=0; loop<1000; loop++) {
+    uint8_t hour, year;
+    hour = 1 + (rand() % 60);
+    min = rand() % 100;
+    sprintf(inp, "%02d%02d%04d", date, hour, min);
+    INIT_TEST_KEYS(inp);
+    menu_getopt("dflkjf", &arg1, MENU_ITEM_DATE);
+    printf("string:%s\n", inp);
+    printf("hour:%d org:%d\n", arg1.date.hour, hour);
+    printf("year:%d org:%d\n", arg1.date.year, year);
+    assert(hour == arg1.time.hour);
+    assert(year == arg1.date.year);
   }
-  inp[ui1] = 0;
-  for (ui2=0;ui1;ui1--, ui2++) {
-    inp[ui1-1] = s[ui2];
-  }
-  INIT_TEST_KEYS(inp);
-  menu_getopt("lsjdflkjf", &arg1, MENU_ITEM_ID);
-  assert(r2 == arg1.integer);
 
   return 0;
 }

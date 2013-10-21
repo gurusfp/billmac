@@ -312,7 +312,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   
   /* Ask a question */
   LCD_WR_LINE_N(0, 0, prompt, 4);
-  LCD_WR(0, 5, "?", 1);
+  LCD_WR(" ?");
 
   /* Set the prompt */
   LCD_cmd(LCD_CMD_CUR_20);
@@ -358,7 +358,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   } while (key != KEY_SC_ENTER);
 
   uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
-  uint8_t *lbp = &(lcd_buf[1][0]);
+  uint8_t *lbp = (uint8_t *) lcd_buf[1];
   uint32_t val = 0;
   uint8_t ui1;
 
@@ -388,15 +388,17 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 	for (ui1=0; ui1<2; ui1++) {
 	  val *= 10;
 	  val += lbp[0] - '0';
+	  lbp++;
 	}
-	if ((0==val) || (val > 31)) menu_error++;
-	arg->date.day = val;
+	if ((0 == val) || (val > 31)) menu_error++;
+	arg->date.date = val;
       }
       /* Month */
       val = 0;
       for (ui1=0; ui1<2; ui1++) {
 	val *= 10;
 	val += lbp[0] - '0';
+	lbp++;
       }
       if ((0 == val) || (val > 12)) menu_error++;
       arg->date.month = val;
@@ -405,6 +407,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       for (ui1=0; ui1<4; ui1++) {
 	val *= 10;
 	val += lbp[0] - '0';
+	lbp++;
       }
       if ((val < 2000) || (val > 2100)) menu_error++;
       arg->date.year = val-2000;
@@ -422,6 +425,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       for (ui1=0; ui1<2; ui1++) {
 	val *= 10;
 	val += lbp[0] - '0';
+	lbp++;
       }
       if (val>23) menu_error++;
       arg->time.hour = val;
@@ -430,6 +434,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       for (ui1=0; ui1<2; ui1++) {
 	val *= 10;
 	val += lbp[0] - '0';
+	lbp++;
       }
       if (val > 59) menu_error++;
       arg->time.min = val;
@@ -442,17 +447,17 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 }
 
 uint8_t
-menu_getyesno(uint8_t q)
+menu_getyesno(uint8_t *quest)
 {
-  uint8_t ret = 0;
+  uint8_t ret = 0, key, key_n, key_s;
   do {
     ret++;
 
-    LCD_WR_LINE(1, 0, q);
+    LCD_WR_LINE(1, 0, quest);
     if (ret&1)
-      LCD_WR("Yes");
+      LCD_WR("Yes")
     else
-      LCD_WR("No");
+      LCD_WR("No")
 
     while KBD_NOT_HIT {
       sleep(10);
@@ -464,7 +469,7 @@ menu_getyesno(uint8_t q)
     case KEY_SC_RIGHT:
       break;
     case KEY_SC_ENTER:
-      return ret&1;
+      return ret & 1;
       break;
     default:
       ret--;

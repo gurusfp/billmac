@@ -33,9 +33,9 @@
 #define MENU_PR_FLOAT  6
 
 typedef union {
-  uint16_t integer;
+  uint32_t integer;
   struct {
-    uint8_t day;
+    uint8_t date;
     uint8_t month;
     uint8_t year;
   } date;
@@ -110,5 +110,7 @@ typedef union {
 
 extern uint8_t keyChars[];
 extern uint8_t menu_error;
+
+uint8_t menu_getyesno(uint8_t *quest);
 
 #endif

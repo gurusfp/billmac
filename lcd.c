@@ -22,6 +22,7 @@ LCD_init(void)
 }
 
 uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
+uint8_t *lcd_buf_p;
 
 void
 LCD_refresh(void)
