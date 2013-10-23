@@ -24,15 +24,17 @@
   "Date" /* 5 */    \
   "Deci" /* 6 */
 
-#define MENU_PR_ID     0
-#define MENU_PR_NAME   1
-#define MENU_PR_PASS   2
-#define MENU_PR_MONTH  3
-#define MENU_PR_TIME   4
-#define MENU_PR_DATE   5
-#define MENU_PR_FLOAT  6
+#define MENU_PR_NONE   0
+#define MENU_PR_ID     1
+#define MENU_PR_NAME   2
+#define MENU_PR_PASS   3
+#define MENU_PR_MONTH  4
+#define MENU_PR_TIME   5
+#define MENU_PR_DATE   6
+#define MENU_PR_FLOAT  7
 
-typedef union {
+typedef struct {
+union {
   uint32_t integer;
   struct {
     uint8_t date;
@@ -43,6 +45,8 @@ typedef union {
     uint8_t hour;
     uint8_t min;
   } time;
+} value;
+  uint8_t   valid;
 } menu_arg_t;
 
 #define MENU_NAMES_LEN 12
@@ -111,6 +115,6 @@ typedef union {
 extern uint8_t keyChars[];
 extern uint8_t menu_error;
 
-uint8_t menu_getyesno(uint8_t *quest);
+uint8_t menu_getopt(uint8_t *quest);
 
 #endif

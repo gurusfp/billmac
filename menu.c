@@ -149,10 +149,14 @@ menu_ValidatePaswd(uint8_t mode)
   menu_unimplemented();
 }
 
+/*
+  Menu item : Name,     cost, discount, serv-tax, vat-id, deleted, valid,   id
+              15bytes, 13bit,    13bit,     1bit,   2bit,    1bit,  1bit, 9bit
+ */
 void
 menu_AddItem(uint8_t mode)
 {
-  menu_unimplemented();
+  
 }
 
 void
@@ -308,8 +312,9 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   if (MENU_ITEM_NONE == opt) return;
 
   /* init */
-  LCD_CLRSCR
-  
+  LCD_CLRSCR;
+  lcd_buf_prop = (opt & MENU_ITEM_PASSWD) ? LCD_PROP_NOECHO_L2 : 0;
+
   /* Ask a question */
   LCD_WR_LINE_N(0, 0, prompt, 4);
   LCD_WR(" ?");
@@ -443,36 +448,38 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   } else assert(0);
 
   /* */
-  assert(0 == menu_error);
+  if (0 == menu_error) {
+    arg->vaild = item_type;
+  } else if (opt & MENU_ITEM_OPTIONAL) {
+  } else if ((opt & MENU_ITEM_DONTCARE_ON_PREV) && (arg == &arg2)) {
+  } else assert(0);
 }
 
 uint8_t
-menu_getyesno(uint8_t *quest)
+menu_getopt(uint8_t *quest, uint8_t **opt_arr, uint8_t max_idx)
 {
   uint8_t ret = 0, key, key_n, key_s;
   do {
-    ret++;
+    ret %= max_idx;
 
     LCD_WR_LINE(1, 0, quest);
-    if (ret&1)
-      LCD_WR("Yes")
-    else
-      LCD_WR("No")
+    LCD_WR(opt_arr[ret]);
 
     while KBD_NOT_HIT {
       sleep(10);
     }
     KBD_GET_KEY;
 
+    ret++;
     switch (KbdData) {
     case KEY_SC_LEFT:
     case KEY_SC_RIGHT:
       break;
     case KEY_SC_ENTER:
-      return ret & 1;
+      return ret;
       break;
     default:
-      ret--;
+      ret--; /* cancell effect of ++ */
       break;
     }
   } while (1);
@@ -489,7 +496,7 @@ menu_main(void)
 
 menu_main_start:
   /* Wait until get command from user */
-  LCD_WR_LINE(0, 0, "Demo App FIXME");  /* FIXME: Need to shop company name in 0,0 */
+  LCD_WR_LINE(0, 0, "Demo App FIXME");  /* FIXME: Need to display shop name in 0,0 */
   LCD_WR_LINE_N(1, 0, (menu_names+(menu_selected*MENU_NAMES_LEN)), MENU_NAMES_LEN);
   while KBD_NOT_HIT {
     DELAY(0xFF);
@@ -498,15 +505,18 @@ menu_main_start:
   KBD_GET_KEY;
   KBD_RESET_KEY;
   if (KEY_SC_ENTER == key) {
+    arg1.valid = 0;
     menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
+    arg2.valid = 0;
     menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
     (*menu_handlers)(menu_args[((menu_selected<<1)+1)]);
   } else if (KEY_SC_LEFT == key) {
     menu_selected--;
-    key = MENU_MAX - 1;
+    key = MENU_MAX - 1; /* out of bound value */
   } else if (KEY_SC_RIGHT == key) {
     menu_selected++;
-    key = 0;
+    key = 0; /* out of bound value */
+  } else if (KEY_SC_PRINT == key) {
   } else {
     /* could be hotkey for menu */
     menu_selected *= 10;

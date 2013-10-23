@@ -227,17 +227,17 @@ main(void)
 
   /* Time HHMM */
   for (loop=0; loop<1000; loop++) {
-    uint8_t hour, year;
-    hour = 1 + (rand() % 60);
-    min = rand() % 100;
-    sprintf(inp, "%02d%02d%04d", date, hour, min);
+    uint8_t hour, min;
+    hour = rand() % 24;
+    min = rand() % 60;
+    sprintf(inp, "%02d%02d", hour, min);
     INIT_TEST_KEYS(inp);
-    menu_getopt("dflkjf", &arg1, MENU_ITEM_DATE);
+    menu_getopt("dflkjf", &arg1, MENU_ITEM_TIME);
     printf("string:%s\n", inp);
-    printf("hour:%d org:%d\n", arg1.date.hour, hour);
-    printf("year:%d org:%d\n", arg1.date.year, year);
+    printf("hour:%d org:%d\n", arg1.time.hour, hour);
+    printf("min:%d org:%d\n", arg1.time.min, min);
     assert(hour == arg1.time.hour);
-    assert(year == arg1.date.year);
+    assert(min == arg1.time.min);
   }
 
   return 0;

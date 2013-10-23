@@ -15,6 +15,8 @@
     for(j=0;j<0xFF;j++) {} \
 }
 
+#define LCD_PROP_NOECHO_L2  1
+
 #ifdef  UNIT_TEST
 
 uint8_t _lcd_idx = 0;
@@ -81,6 +83,7 @@ uint8_t _lcd_idx = 0;
     lcd_buf_p++;				\
   }						\
   lcd_buf_p = (uint8_t *)lcd_buf;		\
+  lcd_buf_prop = 0;				\
 }
 
 #define LCD_WR_LINE(x, y, str)  {	\
@@ -139,6 +142,7 @@ uint8_t _lcd_idx = 0;
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
+extern uint8_t lcd_buf_prop;
 extern uint8_t *lcd_buf_p;
 extern uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
 extern void LCD_init(void);

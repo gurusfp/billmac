@@ -6,6 +6,9 @@
 void
 LCD_init(void)
 {
+  /* */
+  LCD_CLRSCR;
+
   /*  Function set: 2 Line, 8-bit, 5x7 dots */
   LCD_cmd(LCD_CMD_2LINE_5x7);
 
@@ -22,6 +25,7 @@ LCD_init(void)
 }
 
 uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
+uint8_t lcd_buf_prop;
 uint8_t *lcd_buf_p;
 
 void
@@ -44,7 +48,7 @@ LCD_refresh(void)
 #endif
   LCD_cmd(LCD_CMD_CUR_20);
   for (ui1=0; ui1<LCD_MAX_COL; ui1++) {
-    LCD_wrchar(buf_p[0]);
+    LCD_wrchar((lcd_buf_prop & LCD_PROP_NOECHO_L2) ? '*' : buf_p[0]);
     buf_p ++;
   }
 #ifdef UNIT_TEST
