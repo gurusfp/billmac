@@ -320,7 +320,6 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   LCD_WR(" ?");
 
   /* Set the prompt */
-  LCD_cmd(LCD_CMD_CUR_20);
   col_id = 0;
   uint8_t *lp = &(lcd_buf[1][0]);
 
@@ -341,7 +340,6 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       }
       col_id--; lp--;
       lp[0] = ' ';
-      LCD_cmd(LCD_CMD_CUR_20|col_id);
       break;
     case KEY_SC_ENTER:
       col_id++;
@@ -379,7 +377,8 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       }
       lbp++;
     }
-    arg->integer = val;
+    arg->value.integer.i8  = val>>16;
+    arg->value.integer.i16 = val;
   } else if ((MENU_ITEM_DATE == item_type) || (MENU_ITEM_MONTH == item_type)) {
     /* format DDMMYYYY || format MMYYYY */
     menu_error = 0;
@@ -396,7 +395,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 	  lbp++;
 	}
 	if ((0 == val) || (val > 31)) menu_error++;
-	arg->date.date = val;
+	arg->value.date.date = val;
       }
       /* Month */
       val = 0;
@@ -406,7 +405,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 	lbp++;
       }
       if ((0 == val) || (val > 12)) menu_error++;
-      arg->date.month = val;
+      arg->value.date.month = val;
       /* Year */
       val = 0;
       for (ui1=0; ui1<4; ui1++) {
@@ -415,7 +414,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 	lbp++;
       }
       if ((val < 2000) || (val > 2100)) menu_error++;
-      arg->date.year = val-2000;
+      arg->value.date.year = val-2000;
     }
   } else if (MENU_ITEM_TIME == item_type) {
     /* format HHMM */
@@ -433,7 +432,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 	lbp++;
       }
       if (val>23) menu_error++;
-      arg->time.hour = val;
+      arg->value.time.hour = val;
       /* Mins */
       val = 0;
       for (ui1=0; ui1<2; ui1++) {
@@ -442,21 +441,21 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 	lbp++;
       }
       if (val > 59) menu_error++;
-      arg->time.min = val;
+      arg->value.time.min = val;
     }
   } else if (MENU_ITEM_STR == item_type) {
   } else assert(0);
 
   /* */
   if (0 == menu_error) {
-    arg->vaild = item_type;
+    arg->valid = item_type;
   } else if (opt & MENU_ITEM_OPTIONAL) {
   } else if ((opt & MENU_ITEM_DONTCARE_ON_PREV) && (arg == &arg2)) {
   } else assert(0);
 }
 
 uint8_t
-menu_getopt(uint8_t *quest, uint8_t **opt_arr, uint8_t max_idx)
+menu_getchoice(uint8_t *quest, uint8_t **opt_arr, uint8_t max_idx)
 {
   uint8_t ret = 0, key, key_n, key_s;
   do {
@@ -505,9 +504,9 @@ menu_main_start:
   KBD_GET_KEY;
   KBD_RESET_KEY;
   if (KEY_SC_ENTER == key) {
-    arg1.valid = 0;
+    arg1.valid = MENU_ITEM_NONE;
     menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
-    arg2.valid = 0;
+    arg2.valid = MENU_ITEM_NONE;
     menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
     (*menu_handlers)(menu_args[((menu_selected<<1)+1)]);
   } else if (KEY_SC_LEFT == key) {

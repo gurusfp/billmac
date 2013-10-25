@@ -34,18 +34,22 @@
 #define MENU_PR_FLOAT  7
 
 typedef struct {
-union {
-  uint32_t integer;
-  struct {
-    uint8_t date;
-    uint8_t month;
-    uint8_t year;
-  } date;
-  struct {
-    uint8_t hour;
-    uint8_t min;
-  } time;
-} value;
+  union {
+    struct {
+      /* Total 24 bit max */
+      uint8_t  i8;  /* msb */
+      uint16_t i16;
+    } integer;
+    struct {
+      uint8_t date;
+      uint8_t month;
+      uint8_t year;
+    } date;
+    struct {
+      uint8_t hour;
+      uint8_t min;
+    } time;
+  } value;
   uint8_t   valid;
 } menu_arg_t;
 
@@ -115,6 +119,6 @@ union {
 extern uint8_t keyChars[];
 extern uint8_t menu_error;
 
-uint8_t menu_getopt(uint8_t *quest);
+void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
 
 #endif

@@ -226,19 +226,23 @@ main(void)
   /* } */
 
   /* Time HHMM */
-  for (loop=0; loop<1000; loop++) {
-    uint8_t hour, min;
-    hour = rand() % 24;
-    min = rand() % 60;
-    sprintf(inp, "%02d%02d", hour, min);
-    INIT_TEST_KEYS(inp);
-    menu_getopt("dflkjf", &arg1, MENU_ITEM_TIME);
-    printf("string:%s\n", inp);
-    printf("hour:%d org:%d\n", arg1.time.hour, hour);
-    printf("min:%d org:%d\n", arg1.time.min, min);
-    assert(hour == arg1.time.hour);
-    assert(min == arg1.time.min);
-  }
+  /* for (loop=0; loop<1; loop++) { */
+  /*   uint8_t hour, min; */
+  /*   hour = rand() % 24; */
+  /*   min = rand() % 60; */
+  /*   sprintf(inp, "%02d%02d", hour, min); */
+  /*   INIT_TEST_KEYS(inp); */
+  /*   menu_getopt("dflkjf", &arg1, MENU_ITEM_TIME); */
+  /*   printf("string:%s\n", inp); */
+  /*   printf("hour:%d org:%d\n", arg1.value.time.hour, hour); */
+  /*   printf("min:%d org:%d\n", arg1.value.time.min, min); */
+  /*   printf("%s\n", lcd_buf[0]); */
+  /*   assert(0 == strncmp("dflk ?          ", lcd_buf, LCD_MAX_COL)); */
+  /*   assert(hour == arg1.value.time.hour); */
+  /*   assert(min == arg1.value.time.min); */
+  /* } */
+
+  /* Get Choice */
 
   return 0;
 }

@@ -110,8 +110,7 @@ uint8_t _lcd_idx = 0;
     lcd_buf_p++;			\
   }					\
   for (; ui1<LCD_MAX_COL; ui1++) {	\
-    lcd_buf_p[0] = ' ';			\
-    lcd_buf_p++;			\
+    lcd_buf_p[ui1] = ' ';		\
   }					\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
