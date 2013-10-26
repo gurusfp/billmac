@@ -16,9 +16,9 @@ void    FlashEraseSector (uint16_t address);
    sector 42-223  : Sale data base
    sector 224-255 : Code         // 8K Code could be reduced
  */
-#define FLASH_
-
-#define FLASH_DATA_START     FLASH_SECTOR_SIZE
+#define FLASH_ITEM_START     (FLASH_SECTOR_SIZE/FLASH_SECTOR_SIZE)
+#define FLASH_ITEM_END       ((FLASH_ITEM_START+((1<<10)*10))/FLASH_SECTOR_SIZE)
+#define FLASH_DATA_START     FLASH_ITEM_END
 #define FLASH_DATA_END       PROGRAM_CODE_START
 
 #endif

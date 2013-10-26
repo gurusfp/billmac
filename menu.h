@@ -15,14 +15,15 @@
 #define MENU_ITEM_PASSWD           (1<<5)
 
 /* Prompt for Menu argument */
+#define MENU_PROMPT_LEN 5
 #define MENU_PROMPTS \
-  "Id  " /* 0 */    \
-  "Name" /* 1 */    \
-  "Pass" /* 2 */    \
-  "Mont" /* 3 */    \
-  "Time" /* 4 */    \
-  "Date" /* 5 */    \
-  "Deci" /* 6 */
+  "Id   " /* 0 */    \
+  "Name " /* 1 */    \
+  "Passw" /* 2 */    \
+  "Month" /* 3 */    \
+  "Time " /* 4 */    \
+  "Date " /* 5 */    \
+  "Decim" /* 6 */
 
 #define MENU_PR_NONE   0
 #define MENU_PR_ID     1

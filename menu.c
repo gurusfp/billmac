@@ -113,6 +113,18 @@ uint8_t keyChars[] = {
   '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
 };
 
+uint8_t menu_str1[] = 
+  "Price", /* */
+  "Disco", /* */
+  "", /* */
+  "", /* */
+  "", /* */
+  "", /* */
+  "", /* */
+  "", /* */
+  "", /* */
+  ;
+
 void
 menu_unimplemented(void)
 {
@@ -156,7 +168,8 @@ menu_ValidatePaswd(uint8_t mode)
 void
 menu_AddItem(uint8_t mode)
 {
-  
+  arg1.valid = MENU_ITEM_NONE;
+  menu_getopt("", &arg1, );
 }
 
 void
@@ -316,7 +329,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
   lcd_buf_prop = (opt & MENU_ITEM_PASSWD) ? LCD_PROP_NOECHO_L2 : 0;
 
   /* Ask a question */
-  LCD_WR_LINE_N(0, 0, prompt, 4);
+  LCD_WR_LINE_N(0, 0, prompt, MENU_PROMPT_LEN);
   LCD_WR(" ?");
 
   /* Set the prompt */

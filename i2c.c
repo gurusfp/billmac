@@ -54,6 +54,17 @@ i2cReadBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
 
   do {
     I2C_START_BIT;
+    I2C_SEND_BYTE(EEPROM_CTRL_WRITE);
+    I2C_GET_ACK(ack);
+  } while (NACK == ack);
+
+  /* send addr */
+  I2C_SEND_BYTE((uint8_t)addr);
+  I2C_GET_ACK(ack);
+  assert(ACK == ack);
+
+  do {
+    I2C_START_BIT;
     I2C_SEND_BYTE(EEPROM_CTRL_READ);
     I2C_GET_ACK(ack);
   } while (NACK == ack);
