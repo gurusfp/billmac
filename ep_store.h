@@ -14,12 +14,16 @@ struct ep_store_layout {
   /* item constants */
   uint16_t  item_last_modified;     /*             2 */
   uint16_t  item_count;             /*             2 */
+  uint8_t   item_slots[ITEM_MAX>>3];/*            64 */
 
+  /* banners */
   uint8_t   shop_name[12];          /*            12 */
   uint8_t   prn_header[64];         /*            64 */
   uint8_t   prn_footer[24];         /*            24 */
+
+  /* integrity */
   uint16_t  eeprom_sig;             /*             2 */
-};                                  /* Total  =  824 */
+};                                  /* Total  =  888 */
 
 #define EEPROM_DATA       (*((struct ep_store_layout *)0))
 #define EEPROM_STORE_READ  i2cReadBytes

@@ -44,7 +44,7 @@ FlashReadByte (uint16_t address)
 
   return value;
 }
-4
+
 /* Erase one flash sector of 128 bytes using the IAP routines of the p89v51rd2.  Take care
    not to erase the last 64 sectors where the monitor resides.  Also, after erasing
    sector 0, the jumps to the monitor locations are restored. */

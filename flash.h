@@ -21,4 +21,6 @@ void    FlashEraseSector (uint16_t address);
 #define FLASH_DATA_START     FLASH_ITEM_END
 #define FLASH_DATA_END       PROGRAM_CODE_START
 
+extern uint8_t bufSS[FLASH_SECTOR_SIZE];
+
 #endif

@@ -113,16 +113,22 @@ uint8_t keyChars[] = {
   '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
 };
 
+#define MENU_STR1_IDX_PRICE 0
+#define MENU_STR1_IDX_DISCO 1
+#define MENU_STR1_IDX_S_TAX 2
+#define MENU_STR1_IDX_YesNo 3
+#define MENU_STR1_IDX_VAT   5
+#define MENU_STR1_IDX_CONFI 6
 uint8_t menu_str1[] = 
-  "Price", /* */
-  "Disco", /* */
-  "", /* */
-  "", /* */
-  "", /* */
-  "", /* */
-  "", /* */
-  "", /* */
-  "", /* */
+  "Price" /* 0 */
+  "Disco" /* 1 */
+  "S.Tax" /* 2 */
+  "Yes  " /* 3 */
+  "No   " /* 4 */
+  "Vat  " /* 5 */
+  "Confi" /* 6 */
+  "" /* */
+  "" /* */
   ;
 
 void
@@ -168,8 +174,90 @@ menu_ValidatePaswd(uint8_t mode)
 void
 menu_AddItem(uint8_t mode)
 {
-  arg1.valid = MENU_ITEM_NONE;
-  menu_getopt("", &arg1, );
+  uint8_t choice[MENU_PROMPT_LEN*4], ui2, ui3, ui4, vat;
+  uint16_t ui1, item_count;
+  menu_arg_t cost;
+
+  /* */
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
+  if (item_count >= ITEM_MAX) {
+    ERROR("Items Exceeded");
+    return;
+  }
+
+  /* Cost, discount */
+  cost.valid = MENU_ITEM_NONE;
+  menu_getopt(menu_str1+(MENU_STR1_IDX_PRICE*MENU_PROMPT_LEN), &cost, MENU_ITEM_FLOAT);
+  arg2.valid = MENU_ITEM_NONE;
+  menu_getopt(menu_str1+(MENU_STR1_IDX_DISCO*MENU_PROMPT_LEN), &arg2, MENU_ITEM_FLOAT);
+
+  /* vat */
+  for (ui2=0; ui2<4; ui2++) {
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
+    for (ui3=0; ui3<4; ui3++) {
+      (choice+(ui2*MENU_PROMPT_LEN)+MENU_PROMPT_LEN-ui3)[0] = '0' + ui1%10;
+      ui1 /= 10;
+    }
+  }
+  vat = menu_getchoice(menu_str1+(MENU_STR1_IDX_VAT*MENU_PROMPT_LEN), choice, 4);
+
+  /* serv-tax */
+  uint8_t s_tax;
+  s_tax = menu_getchoice(menu_str1+(MENU_STR1_IDX_S_TAX*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2) ? 0 : 1;
+
+  /* Confirm */
+  if ( (MENU_ITEM_NONE == arg1.valid) || (MENU_ITEM_NONE == arg2.valid) ||
+       (MENU_ITEM_NONE == cost.valid) )
+    return;
+  if (0 != menu_getchoice(menu_str1+(MENU_STR1_IDX_CONFI*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2))
+    return;
+
+  /* Pick an empty id */
+  ui1 = 0xFFFF;
+  for (ui2=0; ui2<(ITEM_MAX>>3); ui2++) {
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_slots[ui2]), (uint8_t *)&ui3, sizeof(uint8_t));
+    if (0xFF != ui3) {
+      for (ui4=0; ui4<8; ui4++) {
+	if (ui3 == (ui3 & (1<<ui4))) {
+	  ui1 = ui2;
+	  ui1 <<= 3;
+	  ui1 += ui4;
+	  break;
+	}
+      }
+      if (0xFFFF != ui1) { /* having taken that slot */
+	ui3 |= 1<<ui4;
+	break;
+      }
+    }
+  }
+  assert(0xFFFF != ui1);
+
+  /* Pack the value */
+  item *it = (void *) &bufSS;
+  for (ui4=0; ui4<ITEM_SIZEOF; ui4++) {
+    bufSS[ui4] = 0;
+  }
+  it->is_valid = 1;
+  it->vat_sel = vat;
+  it->has_serv_tax = s_tax;
+  it->id = ui1;
+  it->id_h = ui1>>8;
+  it->cost = cost.value.integer;
+  it->discount = cost.value.integer;
+  for (ui4=0; ui4<15; ui4++) {
+    it->name[ui4] = lcd_buf[1][ui4];
+  }
+
+  /* store it */
+  if (0xFFFF == flash_item_add((uint8_t *)it)) {
+    ERROR("Can't add item");
+  } else { /* update database */
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_slots[ui2]), (uint8_t *)&ui3, sizeof(uint8_t));
+
+    item_count++;
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
+  }
 }
 
 void
@@ -468,14 +556,15 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 }
 
 uint8_t
-menu_getchoice(uint8_t *quest, uint8_t **opt_arr, uint8_t max_idx)
+menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
 {
   uint8_t ret = 0, key, key_n, key_s;
   do {
     ret %= max_idx;
 
-    LCD_WR_LINE(1, 0, quest);
-    LCD_WR(opt_arr[ret]);
+    LCD_WR_LINE_N(1, 0, quest, MENU_PROMPT_LEN);
+    LCD_WR(": ");
+    LCD_WR_N(opt_arr+(ret*MENU_PROMPT_LEN), MENU_PROMPT_LEN);
 
     while KBD_NOT_HIT {
       sleep(10);
