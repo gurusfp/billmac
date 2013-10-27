@@ -119,6 +119,11 @@ uint8_t keyChars[] = {
 #define MENU_STR1_IDX_YesNo 3
 #define MENU_STR1_IDX_VAT   5
 #define MENU_STR1_IDX_CONFI 6
+#define MENU_STR1_IDX_ITEM  7
+#define MENU_STR1_IDX_MANY  8
+#define MENU_STR1_IDX_FINAL 9
+#define MENU_STR1_IDX_PRINT 10
+#define MENU_STR1_IDX_SAVE  11
 uint8_t menu_str1[] = 
   "Price" /* 0 */
   "Disco" /* 1 */
@@ -127,8 +132,11 @@ uint8_t menu_str1[] =
   "No   " /* 4 */
   "Vat  " /* 5 */
   "Confi" /* 6 */
-  "" /* */
-  "" /* */
+  "Item#" /* 7 */
+  "Many#" /* 8 */
+  "Final" /* 9 */
+  "Print" /*10 */
+  "Save " /*11 */
   ;
 
 void
@@ -137,10 +145,79 @@ menu_unimplemented(void)
   assert(0);
 }
 
+sale_item s_item;
+
 void
 menu_Billing(uint8_t mode)
 {
-  menu_unimplemented();
+  uint8_t ui2;
+  uint16_t item_addr;
+
+  billing *bi = (void *) bufSS;
+  for (ui2=0; ui2<sizeof(billing); ui2++) {
+    bufSS[ui2] = 0;
+  }
+
+  arg2.valid = MENU_ITEM_NONE;
+  menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg2, MENU_ITEM_ID);
+
+get_more_items:
+  for (; bi->info.n_items < 16; bi->info.n_items++) {
+    item_addr = flash_item_find(arg2.value.integer);
+    if ((MENU_ITEM_NONE == arg2.valid) || (0xFFFF == item_addr))
+      break;
+
+    /* */
+    ui2 = bi->info.n_items;
+    bi->items[ui2].item_id = arg2.value.integer;
+    bi->items[ui2].item_id_h = arg2.value.integer>>8;
+    bi->addrs[ui2] = item_addr;
+
+    do {
+      /* # items */
+      arg2.valid = MENU_ITEM_NONE;
+      menu_getopt(menu_str1+(MENU_STR1_IDX_MANY*MENU_PROMPT_LEN), &arg2, MENU_ITEM_ID);
+    } while (MENU_ITEM_NONE == arg2.valid);
+
+    /* */
+    bi->items[ui2].num_sale  = arg2.value.integer;
+  }
+
+  /* */
+  if (0 != menu_getchoice(menu_str1+(MENU_STR1_IDX_FINAL*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2))
+    goto get_more_items;
+
+  /* */
+  if (0 != menu_getchoice(menu_str1+(MENU_STR1_IDX_SAVE*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2))
+    return;
+
+  /* time */
+  {
+    uint8_t buf[3];
+    timerDateGet(buf);
+    bi->info.date_dd = ((buf[0]>>4)&0x3)*10+(buf[0]&0xF);
+    bi->info.date_mm = ((buf[0]>>4)&0x1)*10+(buf[0]&0xF);
+
+    timerTimeGet(buf);
+    bi->info.time_hh = ((buf[0]>>4)&0x3)*10+(buf[0]&0xF);
+    bi->info.time_mm = ((buf[0]>>4)&0x7)*10+(buf[0]&0xF);
+  }
+
+  /* */
+  if (0 == menu_getchoice(menu_str1+(MENU_STR1_IDX_PRINT*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2)) {
+    /* print */
+    //  uint8_t buf[4];
+    //  item*   i_p = (void *)buf;
+    //    for (ui2=0; ui2<4; ui2++)
+    //      buf[ui2] = FlashReadByte(item_addr+ui2);
+  }
+
+  flash_sale_add(bufSS);
+
+  /* */
+  if (0 == s_item.n_items)
+    return;
+
 }
 
 void
@@ -207,34 +284,15 @@ menu_AddItem(uint8_t mode)
 
   /* Confirm */
   if ( (MENU_ITEM_NONE == arg1.valid) || (MENU_ITEM_NONE == arg2.valid) ||
-       (MENU_ITEM_NONE == cost.valid) )
+       (MENU_ITEM_NONE == cost.valid) ) {
+    ERROR("Invalid Option");
     return;
+  }
   if (0 != menu_getchoice(menu_str1+(MENU_STR1_IDX_CONFI*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2))
     return;
 
-  /* Pick an empty id */
-  ui1 = 0xFFFF;
-  for (ui2=0; ui2<(ITEM_MAX>>3); ui2++) {
-    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_slots[ui2]), (uint8_t *)&ui3, sizeof(uint8_t));
-    if (0xFF != ui3) {
-      for (ui4=0; ui4<8; ui4++) {
-	if (ui3 == (ui3 & (1<<ui4))) {
-	  ui1 = ui2;
-	  ui1 <<= 3;
-	  ui1 += ui4;
-	  break;
-	}
-      }
-      if (0xFFFF != ui1) { /* having taken that slot */
-	ui3 |= 1<<ui4;
-	break;
-      }
-    }
-  }
-  assert(0xFFFF != ui1);
-
   /* Pack the value */
-  item *it = (void *) &bufSS;
+  item *it = (void *) bufSS;
   for (ui4=0; ui4<ITEM_SIZEOF; ui4++) {
     bufSS[ui4] = 0;
   }
@@ -250,21 +308,72 @@ menu_AddItem(uint8_t mode)
   }
 
   /* store it */
-  if (0xFFFF == flash_item_add((uint8_t *)it)) {
+  uint16_t item_addr = flash_item_add((uint8_t *)it);
+  if (0xFFFF == item_addr) {
     ERROR("Can't add item");
   } else { /* update database */
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_slots[ui2]), (uint8_t *)&ui3, sizeof(uint8_t));
-
     item_count++;
     EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
   }
 }
 
 void
+menu_DelItem(uint8_t mode)
+{
+  if (MENU_ITEM_NONE == arg1.valid) {
+    ERROR("Invalid Option");
+    return;
+  }
+
+  uint16_t item_addr = flash_item_find(arg1.value.integer);
+  if (0xFFFF == item_addr) {
+    ERROR("Not Found");
+    return;
+  }
+  uint8_t  ui2 = FlashReadByte(item_addr);
+  ui2 |= ITEM_BYTE_DELETE_MASK;
+  FlashWriteByte(item_addr, ui2);
+
+  uint16_t item_count;
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
+  item_count--;
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
+}
+
+#if 0
+void
 menu_ModItem(uint8_t mode)
 {
-  menu_unimplemented();
+  uint8_t ui2, ui3;
+
+  if (MENU_ITEM_NONE == arg1.valid) {
+    ERROR("Invalid Option");
+    return;
+  }
+
+  uint16_t item_addr = flash_item_find(arg1.value.integer);
+  if (0xFFFF == item_addr) {
+    ERROR("Not Found");
+    return;
+  }
+
+  /* Obtain the full item */
+  item *it = (void *) bufSS;
+  for (ui2=0; ui2<ITEM_SIZEOF; ui2++) {
+    bufSS[ui2] = FlashReadByte(item_addr+ui2);
+  }
+
+  /* insert the new one */
+  uint16_t item_addr1 = flash_item_add((uint8_t *)it);
+  if (0xFFFF == item_addr1) {
+    ERROR("Can't add item");
+  } else { /* update database */
+    /* delete the old one */
+    ui2 = bufSS[0] | ITEM_BYTE_DELETE_MASK;
+    FlashWriteByte(item_addr, ui2);
+  }
 }
+#endif
 
 void
 menu_DayItemBill(uint8_t mode)

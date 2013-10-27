@@ -20,7 +20,7 @@ typedef struct {
 #define  ITEM_BYTE_ID_BYTE_OFFSET         2
 
 /* 2 bytes */
-typedef sturct {
+typedef struct {
   uint8_t   item_id;
   uint8_t   item_id_h:1;
   uint8_t   cost_modified:1;
@@ -32,10 +32,6 @@ typedef sturct {
 /* 3 bytes */
 typedef struct {
   uint16_t  n_items:4;
-  //  uint16_t  id:12; // why do we need this?
-
-  //  uint16_t  na0:3;
-  //  uint16_t  printed:1;
 
   uint16_t  time_hh:5;
   uint16_t  time_mm:6;
@@ -45,6 +41,13 @@ typedef struct {
 } sale_info;
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
+
+/* */
+typedef struct {
+  sale_info info;
+  sale_item items[16];
+  uint16_t addrs[16];
+} billing;
 
 /* checks */
 #if 2 != sizeof(sale_item)

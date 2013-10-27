@@ -143,11 +143,11 @@ timerDateGet(uint8_t *ymd)
 
   I2C_GET_BYTE(ui2);
   I2C_SEND_ACK(ACK);
-  ymd[0] = ui2;
+  ymd[1] = ui2;
 
   I2C_GET_BYTE(ui2);
   I2C_SEND_ACK(NACK);
-  ymd[0] = ui2;
+  ymd[2] = ui2;
 
   I2C_STOP_BIT;
 }

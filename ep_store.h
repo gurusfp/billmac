@@ -14,7 +14,6 @@ struct ep_store_layout {
   /* item constants */
   uint16_t  item_last_modified;     /*             2 */
   uint16_t  item_count;             /*             2 */
-  uint8_t   item_slots[ITEM_MAX>>3];/*            64 */
 
   /* banners */
   uint8_t   shop_name[12];          /*            12 */
@@ -22,22 +21,24 @@ struct ep_store_layout {
   uint8_t   prn_footer[24];         /*            24 */
 
   /* integrity */
-  uint16_t  eeprom_sig;             /*             2 */
-};                                  /* Total  =  888 */
+  uint8_t   eeprom_idx;             /*             1 */
+  uint16_t  eeprom_sig[16];         /*            32 */
+};                                  /* Total  =  857 */
 
-#define EEPROM_DATA       (*((struct ep_store_layout *)0))
-#define EEPROM_STORE_READ  i2cReadBytes
+#define EEPROM_DATA         (*((struct ep_store_layout *)0))
+#define EEPROM_STORE_READ   i2cReadBytes
 #define EEPROM_STORE_WRITE(A, B, C) \
   i2cWriteBytes(A, B, C);	    \
   { \
-  uint16_t ui1;	uint8_t ui2;					\
+  uint16_t ui1;	uint8_t ui2, eeprom_idx;				\
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&eeprom_idx, sizeof(uint8_t));
   CRC16_Init();							\
-  for (ui1=0; ui1<(sizeof(struct ep_store_layout)-2); ui1++) {	\
+  for (ui1=0; ui1<(uint16_t)&(EEPROM_DATA.eeprom_sig[0]); ui1++) {	\
   EEPROM_STORE_READ(ui1, &ui2, sizeof(uint8_t));		\
   CRC16_Update(ui2);						\
   }								\
   ui1 = CRC16_High; ui1 <<= 8; ui1 |= CRC16_Low;		\
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_sig), (uint8_t *)&ui1, sizeof(uint16_t)); \
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t)); \
   }
 
 #endif
