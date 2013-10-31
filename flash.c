@@ -16,13 +16,13 @@ FlashWriteByte (uint16_t address, uint8_t value)
   assert (address < PROGRAM_CODE_START);
 
   FCF = 0;
-  _asm
+  __asm
     mov R1, #0x02
     ;DPH contains the high part of the sector
     ;DPL contains the low part of the sector
-    mov	a,_FlashByte_PARM_2
+    mov	a,_FlashWriteByte_PARM_2
     lcall 0x1ff0
-  _endasm;
+  __endasm;
   FCF = 1;
 }
 
@@ -35,12 +35,12 @@ FlashReadByte (uint16_t address)
   assert (address < PROGRAM_CODE_START);
 
   FCF = 0;
-  _asm
+  __asm
     mov R1, #0x03
     ;DPH contains the high part of the sector
     ;DPL contains the low part of the sector
     lcall 0x1ff0
-  _endasm;
+  __endasm;
   FCF = 1;
 
   return value;
@@ -56,15 +56,14 @@ FlashEraseSector (uint16_t address)
   //  assert(address < FLASH_DATA_END);
 
   FCF = 0;
-  _asm
+  __asm
     mov R1, #0x08
     ;DPH contains the high part of the sector
     ;DPL contains the low part of the sector
     lcall 0x1ff0 ;Entry point
-  _endasm;
+  __endasm;
   FCF = 1;
 }
-
 
 /* Item type storage : Each item is packed in 20 byte
 continous-running-storage.
