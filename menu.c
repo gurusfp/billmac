@@ -245,8 +245,8 @@ menu_ValidatePaswd(uint8_t mode)
 }
 
 /*
-  Menu item : Name,     cost, discount, serv-tax, vat-id, deleted, valid,   id
-              15bytes, 13bit,    13bit,     1bit,   2bit,    1bit,  1bit, 9bit
+  Menu item : Name,     cost, discount, serv-tax, vat-id, id
+              15bytes, 13bit,    13bit,     1bit,   2bit, 9bit
  */
 void
 menu_AddItem(uint8_t mode)
@@ -260,6 +260,15 @@ menu_AddItem(uint8_t mode)
   if (item_count >= ITEM_MAX) {
     ERROR("Items Exceeded");
     return;
+  }
+
+  /* save name */
+  item *it = (void *) bufSS;
+  for (ui4=0; ui4<ITEM_SIZEOF; ui4++) {
+    bufSS[ui4] = 0;
+  }
+  for (ui4=0; ui4<15; ui4++) {
+    it->name[ui4] = lcd_buf[1][ui4];
   }
 
   /* Cost, discount */
@@ -292,20 +301,12 @@ menu_AddItem(uint8_t mode)
     return;
 
   /* Pack the value */
-  item *it = (void *) bufSS;
-  for (ui4=0; ui4<ITEM_SIZEOF; ui4++) {
-    bufSS[ui4] = 0;
-  }
-  it->is_valid = 1;
   it->vat_sel = vat;
   it->has_serv_tax = s_tax;
   it->id = ui1;
   it->id_h = ui1>>8;
   it->cost = cost.value.integer;
-  it->discount = cost.value.integer;
-  for (ui4=0; ui4<15; ui4++) {
-    it->name[ui4] = lcd_buf[1][ui4];
-  }
+  it->discount = discount.value.integer;
 
   /* store it */
   uint16_t item_addr = flash_item_add((uint8_t *)it);

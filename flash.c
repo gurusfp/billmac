@@ -244,3 +244,6 @@ flash_sale_add(uint8_t *sale)
   }
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&sale_end, sizeof(uint16_t));
 }
+
+void
+flash_sale_find

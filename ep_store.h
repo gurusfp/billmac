@@ -11,19 +11,30 @@ struct ep_store_layout {
   uint16_t  vat[4];                 /*             8 */
   uint16_t  service_tax;            /*             2 */
 
-  /* item constants */
+  /* item constants
+     max items = 64*8 = 512
+   */
+  uint8_t   item_valid[64];         /*            64 */
   uint16_t  item_last_modified;     /*             2 */
   uint16_t  item_count;             /*             2 */
+
+  /* */
+  uint16_t  sale_date_ptr[12*4];    /*            96 */
+  uint16_t  sale_date_old_ptr[1*4]; /*             8 */
+  uint8_t   sale_date_old_ptr_month;/*             1 */
 
   /* banners */
   uint8_t   shop_name[12];          /*            12 */
   uint8_t   prn_header[64];         /*            64 */
   uint8_t   prn_footer[24];         /*            24 */
 
-  /* integrity */
+  /* integrity : 'corrupted' should be left at 0 and
+     written with random value to invalidate the sig
+   */
+  uint8_t   corrupted;              /*             1 */
   uint8_t   eeprom_idx;             /*             1 */
-  uint16_t  eeprom_sig[16];         /*            32 */
-};                                  /* Total  =  857 */
+  uint16_t  eeprom_sig[8];          /*            16 */
+};                                  /* Total  = 1009 */
 
 #define EEPROM_DATA         (*((struct ep_store_layout *)0))
 #define EEPROM_STORE_READ   i2cReadBytes

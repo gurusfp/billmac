@@ -4,8 +4,7 @@
 /* Balanced to 20 bytes */
 typedef struct {
   uint16_t  id_h:1;
-  uint16_t  is_valid:1;
-  uint16_t  is_deleted:1;
+  uint16_t  unused:2;
   uint16_t  cost:13;
   uint8_t   id;
   uint16_t  has_serv_tax:1;
@@ -23,9 +22,7 @@ typedef struct {
 typedef struct {
   uint8_t   item_id;
   uint8_t   item_id_h:1;
-  uint8_t   cost_modified:1;
-  uint8_t   tax_modified:1;
-  uint8_t   other_modified:1;
+  uint8_t   unused:3;
   uint8_t   num_sale:4;
 } sale_item;
 

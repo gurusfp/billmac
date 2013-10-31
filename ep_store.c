@@ -41,7 +41,7 @@ ep_store_init(void)
 
   /* clear all bytes of flash*/
   ui2 = 0;
-  for (ui1=0; ui1<(sizeof(struct ep_store_layout)-2); ui1++) {
+  for (ui1=0; ui1<sizeof(struct ep_store_layout); ui1++) {
     EEPROM_STORE_WRITE(ui1, (uint8_t *)&ui2, sizeof(uint8_t));
   }
 
