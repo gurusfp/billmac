@@ -124,6 +124,9 @@ uint8_t keyChars[] = {
 #define MENU_STR1_IDX_FINAL 9
 #define MENU_STR1_IDX_PRINT 10
 #define MENU_STR1_IDX_SAVE  11
+#define MENU_STR1_IDX_DADAT 12
+#define MENU_STR1_IDX_NAME  13
+#define MENU_STR1_IDX_REPLA 14
 uint8_t menu_str1[] = 
   "Price" /* 0 */
   "Disco" /* 1 */
@@ -137,6 +140,9 @@ uint8_t menu_str1[] =
   "Final" /* 9 */
   "Print" /*10 */
   "Save " /*11 */
+  "Delet" /*12 */
+  "Name " /*13 */
+  "Repla" /*14 */
   ;
 
 void
@@ -151,7 +157,7 @@ void
 menu_Billing(uint8_t mode)
 {
   uint8_t ui2;
-  uint16_t item_addr;
+  uint16_t item_addr, ui1;
 
   billing *bi = (void *) bufSS;
   for (ui2=0; ui2<sizeof(billing); ui2++) {
@@ -203,13 +209,16 @@ get_more_items:
     bi->info.time_mm = ((buf[0]>>4)&0x7)*10+(buf[0]&0xF);
   }
 
-  /* */
-  if (0 == menu_getchoice(menu_str1+(MENU_STR1_IDX_PRINT*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2)) {
-    /* print */
-    //  uint8_t buf[4];
-    //  item*   i_p = (void *)buf;
-    //    for (ui2=0; ui2<4; ui2++)
-    //      buf[ui2] = FlashReadByte(item_addr+ui2);
+  /* billing ... */
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.print_it), (uint8_t *)&ui2, sizeof(uint8_t));
+  if (0 == ui2) { /* enabled */
+    if (0 == menu_getchoice(menu_str1+(MENU_STR1_IDX_PRINT*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2)) {
+      /* print */
+      //  uint8_t buf[4];
+      //  item*   i_p = (void *)buf;
+      //    for (ui2=0; ui2<4; ui2++)
+      //      buf[ui2] = FlashReadByte(item_addr+ui2);
+    }
   }
 
   flash_sale_add(bufSS);
@@ -217,31 +226,29 @@ get_more_items:
   /* */
   if (0 == s_item.n_items)
     return;
-
 }
 
 void
 menu_ShowBill(uint8_t mode)
 {
-  menu_unimplemented();
-}
+  sale_info* si;
 
-void
-menu_DupBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
+  if ((MENU_PR_NONE == arg1.valid) || (MENU_PR_NONE == arg2.valid))
+    return;
 
-void
-menu_DeleteBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
+  si = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
+  if (NULL == si) {
+    ERROR("Not Found");
+    return;
+  }
 
-void
-menu_ValidatePaswd(uint8_t mode)
-{
-  menu_unimplemented();
+  if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
+    /* FIXME: print */
+  } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
+    FlashWriteByte((uint16_t) &(si->deleted), 1);
+  } else {
+    /* FIXME: display */
+  }
 }
 
 /*
@@ -255,7 +262,7 @@ menu_AddItem(uint8_t mode)
   uint16_t ui1, item_count;
   menu_arg_t cost;
 
-  /* */
+  /* Check if space is available */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
   if (item_count >= ITEM_MAX) {
     ERROR("Items Exceeded");
@@ -308,73 +315,24 @@ menu_AddItem(uint8_t mode)
   it->cost = cost.value.integer;
   it->discount = discount.value.integer;
 
-  /* store it */
-  uint16_t item_addr = flash_item_add((uint8_t *)it);
-  if (0xFFFF == item_addr) {
-    ERROR("Can't add item");
-  } else { /* update database */
-    item_count++;
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
-  }
+  /* store it at empty space */
+  flash_item_add((uint8_t *)it);
 }
 
 void
 menu_DelItem(uint8_t mode)
 {
-  if (MENU_ITEM_NONE == arg1.valid) {
+  if ((MENU_ITEM_NONE == arg1.valid) || (MENU_ITEM_ID != arg1.valid)) {
     ERROR("Invalid Option");
     return;
   }
-
-  uint16_t item_addr = flash_item_find(arg1.value.integer);
-  if (0xFFFF == item_addr) {
-    ERROR("Not Found");
+  if (arg1.value.integer >= ITEM_MAX) {
+    ERROR("Too Large Opt");
     return;
   }
-  uint8_t  ui2 = FlashReadByte(item_addr);
-  ui2 |= ITEM_BYTE_DELETE_MASK;
-  FlashWriteByte(item_addr, ui2);
 
-  uint16_t item_count;
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
-  item_count--;
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
+  flash_item_delete(arg1.value.integer);
 }
-
-#if 0
-void
-menu_ModItem(uint8_t mode)
-{
-  uint8_t ui2, ui3;
-
-  if (MENU_ITEM_NONE == arg1.valid) {
-    ERROR("Invalid Option");
-    return;
-  }
-
-  uint16_t item_addr = flash_item_find(arg1.value.integer);
-  if (0xFFFF == item_addr) {
-    ERROR("Not Found");
-    return;
-  }
-
-  /* Obtain the full item */
-  item *it = (void *) bufSS;
-  for (ui2=0; ui2<ITEM_SIZEOF; ui2++) {
-    bufSS[ui2] = FlashReadByte(item_addr+ui2);
-  }
-
-  /* insert the new one */
-  uint16_t item_addr1 = flash_item_add((uint8_t *)it);
-  if (0xFFFF == item_addr1) {
-    ERROR("Can't add item");
-  } else { /* update database */
-    /* delete the old one */
-    ui2 = bufSS[0] | ITEM_BYTE_DELETE_MASK;
-    FlashWriteByte(item_addr, ui2);
-  }
-}
-#endif
 
 void
 menu_DayItemBill(uint8_t mode)
@@ -451,43 +409,145 @@ menu_TaxReport(uint8_t mode)
 void
 menu_ModVat(uint8_t mode)
 {
-  menu_unimplemented();
+  uint16_t ui1;
+  uint8_t  ui2, ui3, choice[MENU_PROMPT_LEN*4], vat;
+
+  if (MENU_ITEM_NONE == arg1.valid)
+    return;
+
+  for (ui2=0; ui2<4; ui2++) {
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
+    for (ui3=0; ui3<4; ui3++) {
+      (choice+(ui2*MENU_PROMPT_LEN)+MENU_PROMPT_LEN-ui3)[0] = '0' + ui1%10;
+      ui1 /= 10;
+    }
+  }
+  ui3 = menu_getchoice(menu_str1+(MENU_STR1_IDX_REPLA*MENU_PROMPT_LEN), choice, 4);
+  assert(ui3 < 4);
+
+  ui1 = arg1.value.integer.i8;
+  ui1 <<= 16;
+  ui1 |= arg1.value.integer.i16;
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.vat[ui3]), (uint8_t *)&ui1, sizeof(uint16_t));
 }
 
 void
 menu_Header(uint8_t mode)
 {
-  menu_unimplemented();
-}
+  uint8_t chars = 0, ui2, ui3;
+  uint8_t mode_max = ((mode&(~MENU_MODEMASK)) == MENU_MFOOTER) ? FOOTER_MAX_SZ : HEADER_MAX_SZ;
 
-void
-menu_Footer(uint8_t mode)
-{
-  menu_unimplemented();
+  do {
+    if (MENU_ITEM_NONE != arg1.valid) {
+      for (ui2=0, ui3=0; (ui2<LCD_MAX_COL) && (0==ui3); ui2++) {
+	ui3 = (' ' == lcd_buf[LCD_MAX_COL+ui2]) ? 1 : 0;
+      }
+      if (ui3) {
+	for (ui2=0; (ui2<LCD_MAX_COL) && (chars<mode_max); ui2++) {
+	  bufSS[ui2] = lcd_buf[LCD_MAX_COL+ui2];
+	  chars++;
+	}
+      } else break;
+    }
+    arg1.valid = MENU_ITEM_NONE;
+    menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg1, MENU_ITEM_STR);
+  } while (chars < mode_max);
+
+  if (chars) {
+    if ((mode&(~MENU_MODEMASK)) == MENU_MFOOTER) {
+      EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.prn_footer[0]), (uint8_t *)bufSS, sizeof(uint8_t)*chars);
+    } else {
+      EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.prn_header[0]), (uint8_t *)bufSS, sizeof(uint8_t)*chars);
+    }
+  }
 }
 
 void
 menu_DelAllBill(uint8_t mode)
 {
-  menu_unimplemented();
+  uint16_t ui1 = 0;
+  uint8_t  ui2;
+
+  /* Remove all data when date is changed */
+  LCD_ALERT("Delete AllData");
+  if (0 != menu_getchoice(menu_str1+(MENU_STR1_IDX_DADAT*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2))
+    return;
+
+  /* */
+  timerDateSet(arg1.value.date.year, arg1.value.date.month, arg1.value.date.date);
+  for (ui2=0; ui2<(13*4); ui2++) {
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
+  }
+  ui1 = FLASH_DATA_START;
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&ui1, sizeof(uint16_t));
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&ui1, sizeof(uint16_t));
+  FlashEraseSector(ui1);
 }
+
+static bit PasswordValidated = 0;
 
 void
 menu_SetPasswd(uint8_t mode)
 {
-  menu_unimplemented();
+  uint16_t ui1, ui4;
+  uint8_t ui2, ui3;
+
+  CRC16_Init();
+  for (ui1=0; ui1<LCD_MAX_COL; ui1++) {
+    ui2 = lcd_buf[LCD_MAX_COL+ui1];
+    for (ui3=0; ui3<(KCHAR_COLS*KCHAR_ROWS); ui3++) {
+      if (ui2 == keyChars[ui3])
+	break;
+    }
+    if (ui3 < (KCHAR_ROWS*KCHAR_COLS))
+      CRC16_Update(ui2);
+  }
+  ui1 = CRC16_High; ui1 <<= 8; ui1 |= CRC16_Low;
+
+  if ((mode&(~MENU_MODEMASK)) == MENU_MVALIDATE) {
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.passwd), (uint8_t *)&ui4, sizeof(uint16_t));
+    if (ui4 != ui1) {
+      LCD_ALERT("Passwd InCorre");
+    } else {
+      LCD_ALERT("Passwd Correct");
+      PasswordValidated = 1;
+    }
+  } else {
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.passwd), (uint8_t *)&ui1, sizeof(uint16_t));
+  }
 }
 
 void
 menu_SetServTax(uint8_t mode)
 {
-  menu_unimplemented();
+  uint16_t ui1;
+
+  if (MENU_ITEM_NONE == arg1.valid)
+    return;
+
+  ui1 = arg1.value.integer.i8;
+  ui1 <<= 16;
+  ui1 |= arg1.value.integer.i16;
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.service_tax), (uint8_t *)&ui1, sizeof(uint16_t));
 }
 
 void
 menu_SetDateTime(uint8_t mode)
 {
-  menu_unimplemented();
+  uint16_t ui1 = 0;
+  uint8_t ymd[3], ui2;
+
+  if ((MENU_ITEM_NONE == arg1.valid) || (MENU_ITEM_NONE == arg2.valid))
+    return;
+
+  timerTimeSet(arg1.value.time.hour, arg1.value.time.min);
+
+  /* if no change in date */
+  timerDateGet(ymd);
+  if ( (ymd[2] == arg1.value.date.year) && (ymd[1] == arg1.value.date.month) && (ymd[0] == arg1.value.date.date) )
+    return;
+
+  menu_DelAllBill(mode);
 }
 
 void
@@ -685,7 +745,7 @@ menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
     switch (KbdData) {
     case KEY_SC_LEFT:
     case KEY_SC_RIGHT:
-      break;
+ break;
     case KEY_SC_ENTER:
       return ret;
       break;

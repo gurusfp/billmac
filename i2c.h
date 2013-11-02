@@ -85,4 +85,7 @@ void i2cReadBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes);
     SCL=0;		    \
   } while (ui1>0)
 
+#define PREV_MONTH(M)       \
+  ((M==1) ? 12 : (M-1))
+
 #endif

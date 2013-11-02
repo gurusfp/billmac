@@ -35,6 +35,7 @@ typedef struct {
 
   uint16_t  date_dd:5;
   uint16_t  date_mm:4;
+  uint8_t   deleted;
 } sale_info;
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
