@@ -66,10 +66,10 @@ struct ep_store_layout {
       CRC16_Update(ui2);						\
     }									\
     ui1 = CRC16_High; ui1 <<= 8; ui1 |= CRC16_Low;			\
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t)); \
+    EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t)); \
 }
 
 void ep_store_init(void);
-void sale_index_it(sale_info *si, uint8_t* ptr);
+void sale_index_it(sale_info *si, uint16_t ptr);
 
 #endif

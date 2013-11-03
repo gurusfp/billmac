@@ -37,6 +37,7 @@ typedef struct {
   uint16_t  date_mm:4;
   uint8_t   deleted;
 } sale_info;
+#define SALE_INFO (*((sale_info *)0))
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
 
@@ -46,20 +47,6 @@ typedef struct {
   sale_item items[16];
   uint16_t addrs[16];
 } billing;
-
-/* checks */
-#if 2 != sizeof(sale_item)
-#error "sale item not packed into 2 bytes"
-#endif
-#if 20 != sizeof(item)
-#error "item not packed in 20 bytes"
-#endif
-#if 3 != sizeof(sale_info)
-#error "item not packed in 20 bytes"
-#endif
-#if 0 != ((FLASH_ITEM_END-FLASH_ITEM_START)%sizeof(item))
-#error "item type wrongly packed"
-#endif
 
 /* constants */
 #define ITEM_SIZEOF       sizeof(item)

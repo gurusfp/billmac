@@ -2,7 +2,6 @@
 #include <p89v51rd2.h>
 
 #include "ep_store.h"
-#include "crc.h"
 
 void
 ep_store_init(void)
@@ -93,9 +92,8 @@ ep_store_init(void)
      At any point, valid data is from sale_date_old_ptr_month onwards.
  */
 void
-sale_index_it(sale_info *si, uint8_t* ptr)
+sale_index_it(sale_info *si, uint16_t ptr)
 {
-  uint8_t sale_date_old_ptr_month;
   uint8_t date, month, sale_date_old_ptr_month, ui2;
   uint16_t p1, ui1;
 

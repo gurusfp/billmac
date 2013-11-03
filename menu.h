@@ -123,6 +123,9 @@ typedef struct {
   MENU_MODE(MENU_MRESET) MENU_NAME("Run Diagnost") COL_JOIN MENU_FUNC(menu_RunDiag) COL_JOIN \
     ARG1(MENU_PR_ID, MENU_ITEM_NONE) COL_JOIN ARG2(MENU_PR_ID, MENU_ITEM_NONE)
 
+#define KCHAR_ROWS        10
+#define KCHAR_COLS         9
+#define KCHAR_SHIFT_SZ     5
 extern uint8_t keyChars[];
 extern uint8_t menu_error;
 extern uint8_t bufSS[];
@@ -158,6 +161,7 @@ void flash_item_add(uint8_t* byte_arr);
 void flash_item_delete(uint16_t id);
 void flash_sale_add(uint8_t *sale);
 void flash_sale_delete_month(uint8_t del_month);
-uint8_t *flash_sale_find(uint8_t *dmy, uint16_t id);
+uint16_t flash_sale_find(uint8_t *dmy, uint16_t id);
 
+#define flash_item_find(id) (FLASH_ITEM_START + (id * ITEM_SIZEOF))
 #endif

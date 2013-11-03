@@ -97,10 +97,8 @@ char    menu_prompt_str[] = MENU_PROMPTS;
 menu_arg_t arg1, arg2;
 uint8_t    menu_error;
 
-#define KCHAR_ROWS        10
-#define KCHAR_COLS         9
-#define KCHAR_SHIFT_SZ     5
 uint8_t keyChars[] = {
+  /* KCHAR_ROWS x KCHAR_COLS */
   '0', ' ', '.', ',', ')', '+', '?', '_', ':',
   '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
   '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '`',
@@ -127,6 +125,7 @@ uint8_t keyChars[] = {
 #define MENU_STR1_IDX_DADAT 12
 #define MENU_STR1_IDX_NAME  13
 #define MENU_STR1_IDX_REPLA 14
+#define MENU_STR1_IDX_NUM_ITEMS 15
 uint8_t menu_str1[] = 
   "Price" /* 0 */
   "Disco" /* 1 */
@@ -153,6 +152,15 @@ menu_Init(void)
 {
   /* FIXME: implement MENU_MRESET */
   MenuMode = MENU_MNOR;
+
+  if (2 == sizeof(sale_item))
+    ERROR("sale item not packed into 2 bytes");
+  if (20 != sizeof(item))
+    ERROR("item not packed in 20 bytes");
+  if (4 != sizeof(sale_info))
+    ERROR("item not packed in 20 bytes");
+  if (0 != ((FLASH_ITEM_END-FLASH_ITEM_START)%sizeof(item)))
+    ERROR("item type wrongly packed");
 }
 
 void
@@ -160,8 +168,6 @@ menu_unimplemented(void)
 {
   assert(0);
 }
-
-sale_item s_item;
 
 void
 menu_Billing(uint8_t mode)
@@ -179,14 +185,14 @@ menu_Billing(uint8_t mode)
 
 get_more_items:
   for (; bi->info.n_items < 16; bi->info.n_items++) {
-    item_addr = flash_item_find(arg2.value.integer);
+    item_addr = flash_item_find(arg2.value.integer.i16);
     if ((MENU_ITEM_NONE == arg2.valid) || (0xFFFF == item_addr))
       break;
 
     /* */
     ui2 = bi->info.n_items;
-    bi->items[ui2].item_id = arg2.value.integer;
-    bi->items[ui2].item_id_h = arg2.value.integer>>8;
+    bi->items[ui2].item_id = (uint8_t) arg2.value.integer.i16;
+    bi->items[ui2].item_id_h = (uint8_t) (arg2.value.integer.i16>>8);
     bi->addrs[ui2] = item_addr;
 
     do {
@@ -196,7 +202,7 @@ get_more_items:
     } while (MENU_ITEM_NONE == arg2.valid);
 
     /* */
-    bi->items[ui2].num_sale  = arg2.value.integer;
+    bi->items[ui2].num_sale  = (uint8_t) arg2.value.integer.i16;
   }
 
   /* */
@@ -232,22 +238,18 @@ get_more_items:
   }
 
   flash_sale_add(bufSS);
-
-  /* */
-  if (0 == s_item.n_items)
-    return;
 }
 
 void
 menu_ShowBill(uint8_t mode)
 {
-  sale_info* si;
+  uint16_t sale_info;
 
   if ((MENU_PR_NONE == arg1.valid) || (MENU_PR_NONE == arg2.valid))
     return;
 
-  si = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
-  if (NULL == si) {
+  sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
+  if (0 == sale_info) {
     ERROR("Not Found");
     return;
   }
@@ -255,7 +257,7 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     /* FIXME: print */
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    FlashWriteByte((uint16_t) &(si->deleted), 1);
+    //    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), 1);
   } else {
     /* FIXME: display */
   }
@@ -322,8 +324,8 @@ menu_AddItem(uint8_t mode)
   it->has_serv_tax = s_tax;
   it->id = ui1;
   it->id_h = ui1>>8;
-  it->cost = cost.value.integer;
-  it->discount = discount.value.integer;
+  it->cost = cost.value.integer.i16;
+  it->discount = arg2.value.integer.i16;
 
   /* store it at empty space */
   flash_item_add((uint8_t *)it);
@@ -336,12 +338,12 @@ menu_DelItem(uint8_t mode)
     ERROR("Invalid Option");
     return;
   }
-  if (arg1.value.integer >= ITEM_MAX) {
+  if (arg1.value.integer.i16 >= ITEM_MAX) {
     ERROR("Too Large Opt");
     return;
   }
 
-  flash_item_delete(arg1.value.integer);
+  flash_item_delete(arg1.value.integer.i16);
 }
 
 void
@@ -450,11 +452,11 @@ menu_Header(uint8_t mode)
   do {
     if (MENU_ITEM_NONE != arg1.valid) {
       for (ui2=0, ui3=0; (ui2<LCD_MAX_COL) && (0==ui3); ui2++) {
-	ui3 = (' ' == lcd_buf[LCD_MAX_COL+ui2]) ? 1 : 0;
+	ui3 = (' ' == lcd_buf[1][ui2]) ? 1 : 0;
       }
       if (ui3) {
 	for (ui2=0; (ui2<LCD_MAX_COL) && (chars<mode_max); ui2++) {
-	  bufSS[ui2] = lcd_buf[LCD_MAX_COL+ui2];
+	  bufSS[ui2] = lcd_buf[1][ui2];
 	  chars++;
 	}
       } else break;
@@ -502,7 +504,7 @@ menu_SetPasswd(uint8_t mode)
 
   CRC16_Init();
   for (ui1=0; ui1<LCD_MAX_COL; ui1++) {
-    ui2 = lcd_buf[LCD_MAX_COL+ui1];
+    ui2 = lcd_buf[1][ui1];
     for (ui3=0; ui3<(KCHAR_COLS*KCHAR_ROWS); ui3++) {
       if (ui2 == keyChars[ui3])
 	break;
@@ -723,6 +725,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       arg->value.time.min = val;
     }
   } else if (MENU_ITEM_STR == item_type) {
+    menu_error = 0;
   } else assert(0);
 
   /* */
@@ -730,36 +733,38 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
     arg->valid = item_type;
   } else if (opt & MENU_ITEM_OPTIONAL) {
   } else if ((opt & MENU_ITEM_DONTCARE_ON_PREV) && (arg == &arg2)) {
-  } else assert(0);
+  }
+#ifdef DEBUG
+  else assert(0);
+#endif
 }
 
 uint8_t
 menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
 {
   uint8_t ret = 0, key, key_n, key_s;
+
   do {
-    ret %= max_idx;
+    assert(ret < max_idx);
 
     LCD_WR_LINE_N(1, 0, quest, MENU_PROMPT_LEN);
     LCD_WR(": ");
-    LCD_WR_N(opt_arr+(ret*MENU_PROMPT_LEN), MENU_PROMPT_LEN);
+    LCD_WR_N((opt_arr+(ret*MENU_PROMPT_LEN)), MENU_PROMPT_LEN);
 
     while KBD_NOT_HIT {
       sleep(10);
     }
     KBD_GET_KEY;
 
-    ret++;
     switch (KbdData) {
     case KEY_SC_LEFT:
+      ret = (0==ret) ? max_idx-1 : ret-1;
+      break;
     case KEY_SC_RIGHT:
- break;
+      ret = ((max_idx-1)==ret) ? 0 : ret+1;
+      break;
     case KEY_SC_ENTER:
       return ret;
-      break;
-    default:
-      ret--; /* cancell effect of ++ */
-      break;
     }
   } while (1);
   assert (0);
@@ -840,7 +845,7 @@ flash_item_add(uint8_t* byte_arr)
   }
   if ( 0 != (ui2 & (1<<(ui1&0x7))) ) {
     assert(0); /* they why? item_count < ITEM_MAX */
-    return -1;
+    return;
   }
   item_last_modified = ui1;
 
@@ -850,7 +855,8 @@ flash_item_add(uint8_t* byte_arr)
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
   ui1 = ((uint16_t)FLASH_ITEM_START) + (ui1*ITEM_SIZEOF);
   for (ui2=0; ui2<ITEM_SIZEOF; ui2++, ui1++) {
-    FlashWriteByte(ui1, byte_arr[0]);
+    if (0 != byte_arr[0])
+      FlashWriteByte(ui1, byte_arr[0]);
     byte_arr++;
   }
 
@@ -885,7 +891,7 @@ flash_item_delete(uint16_t id)
     else
       bufSS[ui1] = 0;
   }
-  FlashEraseSector(block);
+  FlashEraseSector((uint16_t)block);
   for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
     if (0 != bufSS[ui1])
       FlashWriteByte(block+ui1, bufSS[ui1]);
@@ -899,7 +905,7 @@ flash_item_delete(uint16_t id)
       else
 	bufSS[ui1] = 0;
     }
-    FlashEraseSector(block_end);
+    FlashEraseSector((uint16_t)block_end);
     for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
       if (0 != bufSS[ui1])
 	FlashWriteByte(block_end+ui1, bufSS[ui1]);
@@ -908,7 +914,6 @@ flash_item_delete(uint16_t id)
 
   /* upate valid */
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_valid[id/8]), (uint8_t *)&item_valid, sizeof(uint8_t));
-  uint16_t ui1;
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
   ui1--;
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
@@ -957,9 +962,10 @@ flash_sale_add(uint8_t *sale)
   }
 
   /* Bytes are available ..., just store */
-  sale_index_it(sale, sale_end);
+  sale_index_it((sale_info *)sale, sale_end);
   for (ui2=0; ui2<nbytes; ui2++) {
-    FlashWriteByte(sale_end, sale[0]);
+    if (0 != sale[0])
+      FlashWriteByte(sale_end, sale[0]);
     sale_end++, sale++;
     if (sale_end >= FLASH_DATA_END) {
       sale_end = FLASH_DATA_START;
@@ -998,28 +1004,28 @@ flash_sale_delete_month(uint8_t del_month)
   }
 }
 
-uint8_t *
+uint16_t
 flash_sale_find(uint8_t *dmy, uint16_t id)
 {
-  sale_info  *si, *vptr;
-  uint16_t ui1, ui2;
+  sale_info  *si;
+  uint16_t ui1, ui2, vptr;
   uint8_t idx;
 
   idx = (dmy[1] - 1) * 4;
-  if (date <= 7) {}
-  else if (date <= 14) idx ++;
-  else if (date <= 21) idx += 2;
+  if (dmy[0] <= 7) {}
+  else if (dmy[0] <= 14) idx ++;
+  else if (dmy[0] <= 21) idx += 2;
   else idx += 3;
 
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[idx]), (uint8_t *)&si, sizeof(uint16_t));
   if (0 == si) return (void *)si;
 
-  for (ui1=0, vptr=si; ui1<id; ui1++, vptr=si) {
+  for (ui1=0, vptr=(uint16_t)si; ui1<id; ui1++, vptr=(uint16_t)si) {
     uint8_t ui3[3];
     sale_info* si_t = ui3;
-    ui3[0] = FlashReadByte(si);
-    ui3[1] = FlashReadByte(si+1);
-    ui3[2] = FlashReadByte(si+2);
+    ui3[0] = FlashReadByte((uint16_t)si);
+    ui3[1] = FlashReadByte((uint16_t)(si+1));
+    ui3[2] = FlashReadByte((uint16_t)(si+2));
     if ( (dmy[0] == si_t->date_dd) && (dmy[1] == si_t->date_mm) ) {
       si = (sale_info *)( ((uint8_t *)si) + SALE_INFO_SIZEOF + (((ui3[0] & SALE_INFO_BYTE_NITEM_MASK) >> SALE_INFO_BYTE_NITEM_SHIFT) * SALE_SIZEOF) );
     } else { /* less # items for this day */

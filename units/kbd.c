@@ -4,7 +4,7 @@
 uint8_t KbdData;
 uint8_t KbdDataAvail;
 
-uint8_t test_key_idx = -1;
+uint16_t test_key_idx = -1;
 uint8_t *test_key = NULL;
 
 #define INIT_TEST_KEYS(A) do { test_key = A; test_key_idx = 0; } while (0)
@@ -24,16 +24,27 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
   if (0xFF == test_key_idx) /* no data yet */
     return;
   if ((0 == test_key[test_key_idx]) && (0 == do_correct)) { /* completed */
-    assert (test_key_idx);
     assert (0xFF != test_key_idx);
     KbdData = KEY_SC_ENTER;
     *p_key = KEY_SC_ENTER;
     *p_key_n = 1;
     *p_key_s = 0;
     test_key_idx = -1;
+    printf("hack2 kbd.c sending:0x%x\n", KbdData);
     return;
   }
 
+  if ((KEY_SC_ENTER==test_key[test_key_idx]) || (KEY_SC_LEFT==test_key[test_key_idx]) || (KEY_SC_RIGHT==test_key[test_key_idx])) {
+    KbdData = test_key[test_key_idx];
+    *p_key = KbdData;
+    *p_key_n = 1;
+    *p_key_s = 0;
+    test_key_idx++;
+    printf("hack kbd.c sending:0x%x\n", KbdData);
+    return;
+  }
+
+  assert(0);
   KbdData = kbd_reverse_map(test_key[test_key_idx]);
   test_key_idx++;
   if (2 <= do_correct) {

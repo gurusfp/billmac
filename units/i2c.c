@@ -53,9 +53,9 @@ timerDateSet(uint8_t year, uint8_t month, uint8_t date)
 void
 timerDateGet(uint8_t *ymd)
 {
-  ymd[0] = date;
-  ymd[1] = month;
-  ymd[2] = year;
+  ymd[0] = i2c_ymd[0];
+  ymd[1] = i2c_ymd[1];
+  ymd[2] = i2c_ymd[2];
 }
 
 void
@@ -68,6 +68,6 @@ timerTimeSet(uint8_t hour, uint8_t min)
 void
 timerTimeGet(uint8_t *hm)
 {
-  hm[0] = min;
-  hm[1] = hour;
+  hm[0] = i2c_hm[0];
+  hm[1] = i2c_hm[1];
 }

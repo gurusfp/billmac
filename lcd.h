@@ -141,6 +141,8 @@ uint8_t _lcd_idx = 0;
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
+#define LCD_ALERT(str) LCD_WR_LINE(0, 0, str)
+
 extern uint8_t lcd_buf_prop;
 extern uint8_t *lcd_buf_p;
 extern uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
