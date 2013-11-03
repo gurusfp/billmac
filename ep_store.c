@@ -68,6 +68,9 @@ ep_store_init(void)
   ui2 = PREV_MONTH(ui2);
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui2, sizeof(uint8_t));
 
+  /* */
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.prn_header[0]), (uint8_t *)"Example Hotel", sizeof(uint8_t));
+
   /* Recompute hash */
   CRC16_Init();
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&eeprom_idx, sizeof(uint8_t));

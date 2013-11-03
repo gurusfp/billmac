@@ -2,7 +2,7 @@
 #define EP_STORE_H
 
 #define EEPROM_DYNARR_MAX    8
-#define HEADER_MAX_SZ       64
+#define HEADER_MAX_SZ       70
 #define FOOTER_MAX_SZ       24
 
 /* Available bytes : 8K : 8192 */
@@ -10,34 +10,33 @@ struct ep_store_layout {
   item      item_mod_his[35];       /* 20*35  =  700 */
 
   /* sale constants */
-  uint16_t  sale_start;             /*             4 */
-  uint16_t  sale_end;               /*             4 */
+  uint16_t  sale_start;             /*             2 */
+  uint16_t  sale_end;               /*             2 */
   uint16_t  vat[4];                 /*             8 */
-  uint16_t  service_tax;            /*             2 */
+  uint16_t  service_tax;            /*             2 */ /* 714 */
 
   /* item constants
      max items = 64*8 = 512
    */
   uint8_t   item_valid[ITEM_MAX/8]; /*            64 */
   uint16_t  item_last_modified;     /*             2 */
-  uint16_t  item_count;             /*             2 */
+  uint16_t  item_count;             /*             2 */ /* 782 */
 
   /* */
   uint16_t  sale_date_ptr[12*4];    /*            96 */
   uint16_t  sale_date_old_ptr[1*4]; /*             8 */
-  uint8_t   sale_date_old_ptr_month;/*             1 */
+  uint8_t   sale_date_old_ptr_month;/*             1 */ /* 887 */
 
-  /* */
+  /* User choices */
   uint8_t   print_it;               /*             1 */
 
   /* Have count of # of bill printed/ day */
   uint16_t  date_month;             /*             2 */
-  uint16_t  bill_id[EEPROM_DYNARR_MAX];  /*       16 */
+  uint16_t  bill_id[EEPROM_DYNARR_MAX];  /*       16 */ /* 906 */
 
   /* banners */
-  uint8_t   shop_name[12];          /*            12 */
-  uint8_t   prn_header[HEADER_MAX_SZ]; /*         64 */
-  uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */
+  uint8_t   prn_header[HEADER_MAX_SZ]; /*         70 */
+  uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */ /* 1000 */
 
   /* */
   uint16_t   passwd;                /*             2 */
@@ -48,7 +47,7 @@ struct ep_store_layout {
   uint8_t   corrupted;              /*             1 */
   uint8_t   eeprom_idx;             /*             1 */
   uint16_t  eeprom_sig[EEPROM_DYNARR_MAX]; /*     16 */
-};                                  /* Total  = 1010 */
+};                                  /* Total  = 1020 */
 
 #define EEPROM_DATA         (*((struct ep_store_layout *)0))
 #define EEPROM_STORE_READ   i2cReadBytes
@@ -69,5 +68,8 @@ struct ep_store_layout {
     ui1 = CRC16_High; ui1 <<= 8; ui1 |= CRC16_Low;			\
     EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t)); \
 }
+
+void ep_store_init(void);
+void sale_index_it(sale_info *si, uint8_t* ptr);
 
 #endif

@@ -3,6 +3,10 @@
 
 #include "i2c.h"
 
+#ifdef UNIT_TEST
+#error "This file should not be included in Unit tests"
+#endif
+
 void
 i2cInit(void)
 {

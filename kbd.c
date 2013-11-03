@@ -7,6 +7,10 @@
 uint8_t KbdData;
 uint8_t KbdDataAvail;
 
+#ifdef UNIT_TEST
+#error "This file should not be included in Unit tests"
+#endif
+
 void
 KbdInit(void)
 {

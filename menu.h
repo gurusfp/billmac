@@ -58,7 +58,7 @@ typedef struct {
 
 #define MENU_MSUPER    0xC0
 #define MENU_MNOR      0x40
-#define MENU_MRESET    0x20
+#define MENU_MRESET    0x80
 #define MENU_MPRINT    0x01
 #define MENU_MDELETE   0x02
 #define MENU_MVALIDATE 0x03
@@ -125,7 +125,39 @@ typedef struct {
 
 extern uint8_t keyChars[];
 extern uint8_t menu_error;
+extern uint8_t bufSS[];
 
 void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
+void menu_Billing(uint8_t mode);
+void menu_ShowBill(uint8_t mode);
+void menu_AddItem(uint8_t mode);
+void menu_DelItem(uint8_t mode);
+void menu_DayItemBill(uint8_t mode);
+void menu_DayAllBill(uint8_t mode);
+void menu_DayBillPrned(uint8_t mode);
+void menu_DayDupBill(uint8_t mode);
+void menu_DayTaxReport(uint8_t mode);
+void menu_MonItemBill(uint8_t mode);
+void menu_MonAllBill(uint8_t mode);
+void menu_MonBillPrned(uint8_t mode);
+void menu_MonTaxReport(uint8_t mode);
+void menu_AllItemBill(uint8_t mode);
+void menu_AllFullBill(uint8_t mode);
+void menu_TaxReport(uint8_t mode);
+void menu_ModVat(uint8_t mode);
+void menu_Header(uint8_t mode);
+void menu_DelAllBill(uint8_t mode);
+void menu_SetPasswd(uint8_t mode);
+void menu_SetServTax(uint8_t mode);
+void menu_SetDateTime(uint8_t mode);
+void menu_RunDiag(uint8_t mode);
+void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
+uint8_t menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx);
+void menu_main(void);
+void flash_item_add(uint8_t* byte_arr);
+void flash_item_delete(uint16_t id);
+void flash_sale_add(uint8_t *sale);
+void flash_sale_delete_month(uint8_t del_month);
+uint8_t *flash_sale_find(uint8_t *dmy, uint16_t id);
 
 #endif

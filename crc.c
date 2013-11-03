@@ -67,13 +67,3 @@ CRC16_Update4Bits(uint8_t val)
   CRC16_High = CRC16_High ^ CRC16_LookupHigh[t];
   CRC16_Low = CRC16_Low ^ CRC16_LookupLow[t];
 }
-
-/*
- * Process one Message Byte to update the current CRC Value
- */
-void
-CRC16_Update(uint8_t val)
-{
-  CRC16_Update4Bits( val >> 4 );	// High nibble first
-  CRC16_Update4Bits( val & 0x0F );	// Low nibble
-}

@@ -43,6 +43,8 @@ Timer0_isr(void) __interrupt(TF0_VECTOR) __using(1)
 void
 main(void)
 {
+main_start:
+
   /* init all */
   KbdInit();
   LCD_init();
@@ -50,7 +52,6 @@ main(void)
   
 
   /* */
-
   while(1) {
     DELAY(255);
 
@@ -70,5 +71,5 @@ main(void)
   }
 
   /* Incase it comes out of this loop :) */
-  main();
+  goto main_start:
 }

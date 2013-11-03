@@ -4,6 +4,10 @@
 void i2cInit(void);
 void i2cWriteBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes);
 void i2cReadBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes);
+void timerDateSet(uint8_t year, uint8_t month, uint8_t date);
+void timerDateGet(uint8_t *ymd);
+void timerTimeSet(uint8_t hour, uint8_t min);
+void timerTimeGet(uint8_t *hm);
 
 #define ACK      0
 #define NACK     1
