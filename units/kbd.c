@@ -30,7 +30,7 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
     *p_key_n = 1;
     *p_key_s = 0;
     test_key_idx = -1;
-    printf("hack2 kbd.c sending:0x%x\n", KbdData);
+    //    printf("hack2 kbd.c sending:0x%x\n", KbdData);
     return;
   }
 
@@ -40,7 +40,7 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
     *p_key_n = 1;
     *p_key_s = 0;
     test_key_idx++;
-    printf("hack kbd.c sending:0x%x\n", KbdData);
+    //    printf("hack kbd.c sending:0x%x\n", KbdData);
     return;
   }
 

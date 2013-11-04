@@ -756,16 +756,17 @@ menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
     }
     KBD_GET_KEY;
 
-    switch (KbdData) {
-    case KEY_SC_LEFT:
+    if (KEY_SC_LEFT == KbdData) {
       ret = (0==ret) ? max_idx-1 : ret-1;
-      break;
-    case KEY_SC_RIGHT:
+    } else if (KEY_SC_RIGHT == KbdData) {
       ret = ((max_idx-1)==ret) ? 0 : ret+1;
-      break;
-    case KEY_SC_ENTER:
+    }
+
+    if (KEY_SC_ENTER == KbdData) {
+      KbdData = 0;
       return ret;
     }
+    KbdData = 0;
   } while (1);
   assert (0);
 }

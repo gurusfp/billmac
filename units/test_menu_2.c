@@ -192,7 +192,7 @@ main(void)
 //  }
 
   /* Get Choice */
-  for (loop=0; loop<1; loop++) {
+  for (loop=0; loop<1000; loop++) {
     uint8_t ui1, ui2;
     uint16_t ui3;
     ui1 = rand() % MENU_STR1_IDX_NUM_ITEMS; /* choosen one */
@@ -209,14 +209,29 @@ main(void)
       }
     }
     inp[ui3] = 0;
-    assert(ui3 <= FLASH_SECTOR_SIZE);
+    if (ui3 > FLASH_SECTOR_SIZE)
+      continue;
     INIT_TEST_KEYS(inp);
-    for (ui2=0; 0 != inp[ui2]; ui2++) {
-      printf("0x%x ", inp[ui2]);
-    }
     ui3 = menu_getchoice("what crap?", menu_str1, MENU_STR1_IDX_NUM_ITEMS);
-    //    assert(0 == strncmp("slkfj ?          ", lcd_buf, LCD_MAX_COL));
-    printf("\nExp:0x%x Act:0x%x\n", ui1, ui3);
+#if 0
+    assert(0 == strncmp("what : Name     ", lcd_buf, LCD_MAX_COL));
+    if (0 != strncmp("what : Name     ", lcd_buf, LCD_MAX_COL)) {
+#ifdef DEBUG
+      for (ui1=0; ui1<LCD_MAX_COL; ui1++)
+	putchar(lcd_buf[0][ui1]);
+      putchar('\n');
+      for (ui1=0; ui1<LCD_MAX_COL; ui1++)
+	putchar(lcd_buf[1][ui1]);
+      putchar('\n');
+#endif
+    }
+#endif
+    if (ui3 != ui1) {
+      for (ui2=0; 0 != inp[ui2]; ui2++) {
+	printf("0x%x ", inp[ui2]);
+      }
+      printf("\nExp:0x%x Act:0x%x\n", ui1, ui3);
+    }
     assert(ui3 == ui1);
   }
 
