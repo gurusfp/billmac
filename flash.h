@@ -14,12 +14,13 @@ void    FlashEraseSector (uint16_t address);
 /* Flash Block 0 is used as follows
    sector 0       : Code
    sector 1-41    : 10K for item
-   sector 42-223  : Sale data base
-   sector 224-255 : Code         // 8K Code could be reduced
+   sector 42-223  : Sale data base (45K)
+   sector 224-255 : Code (8K Code could be reduced)
  */
 #define FLASH_ITEM_START     FLASH_SECTOR_SIZE
 #define FLASH_ITEM_END       (FLASH_ITEM_START+((1<<10)*10))
 #define FLASH_DATA_START     FLASH_ITEM_END
 #define FLASH_DATA_END       PROGRAM_CODE_START
+#define FLASH_ADDR_INVALID   0xFFFF
 
 #endif

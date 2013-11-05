@@ -27,8 +27,9 @@ typedef struct {
 } sale_item;
 
 /* 3 bytes */
+#define  SALE_INFO_ITEMS_NBITS  4
 typedef struct {
-  uint16_t  n_items:4;
+  uint16_t  n_items:SALE_INFO_ITEMS_NBITS;
 
   uint16_t  time_hh:5;
   uint16_t  time_mm:6;
@@ -42,10 +43,11 @@ typedef struct {
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
 
 /* */
+#define MAX_ITEMS_IN_BILL  (1<<SALE_INFO_ITEMS_NBITS)
 typedef struct {
   sale_info info;
-  sale_item items[16];
-  uint16_t addrs[16];
+  sale_item items[MAX_ITEMS_IN_BILL];
+  uint16_t addrs[MAX_ITEMS_IN_BILL];
 } billing;
 
 /* constants */

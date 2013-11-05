@@ -161,6 +161,9 @@ menu_Init(void)
     ERROR("item not packed in 20 bytes");
   if (0 != ((FLASH_ITEM_END-FLASH_ITEM_START)%sizeof(item)))
     ERROR("item type wrongly packed");
+
+  assert(sizeof(billing) <= FLASH_SECTOR_SIZE);
+  assert(ITEM_SIZEOF < (1<<8));
 }
 
 void
@@ -184,9 +187,9 @@ menu_Billing(uint8_t mode)
   menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg2, MENU_ITEM_ID);
 
 get_more_items:
-  for (; bi->info.n_items < 16; bi->info.n_items++) {
+  for (; bi->info.n_items < MAX_ITEMS_IN_BILL; bi->info.n_items++) {
     item_addr = flash_item_find(arg2.value.integer.i16);
-    if ((MENU_ITEM_NONE == arg2.valid) || (0xFFFF == item_addr))
+    if ((MENU_ITEM_NONE == arg2.valid) || (FLASH_ADDR_INVALID == item_addr))
       break;
 
     /* */
@@ -249,17 +252,17 @@ menu_ShowBill(uint8_t mode)
     return;
 
   sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
-  if (0 == sale_info) {
+  if (FLASH_ADDR_INVALID == sale_info) {
     ERROR("Not Found");
     return;
   }
+
+  /* FIXME: First display before any operation */
 
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     /* FIXME: print */
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
     //    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), 1);
-  } else {
-    /* FIXME: display */
   }
 }
 
@@ -778,8 +781,15 @@ menu_main(void)
 
   /* initialize */
   menu_selected = 0;
+  key = 0;
 
 menu_main_start:
+  /* Check if the new assignment is mode appropriate */
+  if ( (0 == (MenuMode & (menu_mode[menu_selected] & MENU_MODEMASK))) ||
+       (menu_selected >= MENU_MAX) ) {
+    menu_selected = 0;
+  }
+
   /* Wait until get command from user */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.prn_header[0]), bufSS, sizeof(uint8_t)*LCD_MAX_COL);
   LCD_WR_LINE_N(0, 0, bufSS, LCD_MAX_COL);
@@ -790,19 +800,17 @@ menu_main_start:
 
   KBD_GET_KEY;
   KBD_RESET_KEY;
+
   if (KEY_SC_ENTER == key) {
-    if (MenuMode & (menu_mode[menu_selected-1] & MENU_MODEMASK)) {
-      arg1.valid = MENU_ITEM_NONE;
-      menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
-      arg2.valid = MENU_ITEM_NONE;
-      menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
-      (menu_handlers[menu_selected-1])(menu_mode[menu_selected-1]);
-    }
-    menu_selected = 1;
+    arg1.valid = MENU_ITEM_NONE;
+    menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
+    arg2.valid = MENU_ITEM_NONE;
+    menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
+    (menu_handlers[menu_selected])(menu_mode[menu_selected]);
   } else if (KEY_SC_LEFT == key) {
-    menu_selected = (1 <= menu_selected) ? MENU_MAX : menu_selected-1;
+    menu_selected = (0 == menu_selected) ? MENU_MAX : menu_selected-1;
   } else if (KEY_SC_RIGHT == key) {
-    menu_selected = (MENU_MAX == menu_selected) ? 1 : menu_selected+1;
+    menu_selected = (menu_selected >= (MENU_MAX-1)) ? 0 : menu_selected+1;
   } else if (KEY_SC_PRINT == key) {
     /* FIXME */
   } else {
@@ -844,26 +852,36 @@ flash_item_add(uint8_t* byte_arr)
     /* incr */
     ui1++;
   }
+
+  /* store that we've taken the spot */
   if ( 0 != (ui2 & (1<<(ui1&0x7))) ) {
-    assert(0); /* they why? item_count < ITEM_MAX */
+    assert(0); /* should not be called */
     return;
   }
   item_last_modified = ui1;
-
-  /* store item */
   ui2 |= 1 << (item_last_modified&0x7);
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_valid[item_last_modified/8]), (uint8_t *)&item_last_modified, sizeof(uint8_t));
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_valid[item_last_modified/8]), (uint8_t *)&ui2, sizeof(uint8_t));
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
-  ui1 = ((uint16_t)FLASH_ITEM_START) + (ui1*ITEM_SIZEOF);
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
+  ui1++;
+  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
+
+#if DEBUG
+  /* Check if the space is empty */
+  assert(ui1<ITEM_MAX);
+  ui1 = flash_item_find(ui1);
+  for (ui2=0; ui2<ITEM_SIZEOF; ui2++) {
+    if (0 != ui1) break;
+  }
+  assert (ui2 == ITEM_SIZEOF);
+#endif
+
+  /* */
   for (ui2=0; ui2<ITEM_SIZEOF; ui2++, ui1++) {
     if (0 != byte_arr[0])
       FlashWriteByte(ui1, byte_arr[0]);
     byte_arr++;
   }
-
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
-  ui1++;
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
 }
 
 void
@@ -871,23 +889,22 @@ flash_item_delete(uint16_t id)
 {
   uint16_t ui1, addr;
   uint8_t item_valid;
-  uint8_t *block, *block_end;
+  uint8_t *block;
 
   /* do nothing if already invalid */
+  assert(id<ITEM_MAX);
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_valid[id/8]), (uint8_t *)&item_valid, sizeof(uint8_t));
   if (0 == (item_valid & (1<<(addr%0x7))) ) {
     return;
   }
-  item_valid &= ~(1 << (addr%0x7));
 
   /* input is id, compute addr */
-  addr = FLASH_ITEM_START + (id * ITEM_SIZEOF);
+  addr = flash_item_find(id);
   block = (uint8_t *) (addr & ~((uint16_t)(FLASH_SECTOR_SIZE-1)));
-  block_end = (uint8_t *) ((addr+ITEM_SIZEOF-1) & ~((uint16_t)(FLASH_SECTOR_SIZE-1)));
 
   /* save start block */
   for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
-    if ( ((block+ui1) < addr) || ((block+ui1) > (addr+ITEM_SIZEOF)) )
+    if ( ((block+ui1) < (uint8_t *)addr) || ((block+ui1) >= (uint8_t *)(addr+ITEM_SIZEOF)) )
       bufSS[ui1] = block[ui1];
     else
       bufSS[ui1] = 0;
@@ -899,21 +916,24 @@ flash_item_delete(uint16_t id)
   }
 
   /* end block */
-  if (block != block_end) {
+  ui1 = (uint16_t) block;
+  block = (uint8_t *) ((addr+ITEM_SIZEOF-1) & ~((uint16_t)(FLASH_SECTOR_SIZE-1)));
+  if ((uint8_t*)ui1 != block) {
     for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
-      if ( (block_end+ui1) > (addr+ITEM_SIZEOF) )
-	bufSS[ui1] = block_end[ui1];
+      if ( (block+ui1) >= (uint8_t *)(addr+ITEM_SIZEOF) )
+	bufSS[ui1] = block[ui1];
       else
 	bufSS[ui1] = 0;
     }
-    FlashEraseSector((uint16_t)block_end);
+    FlashEraseSector((uint16_t)block);
     for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
       if (0 != bufSS[ui1])
-	FlashWriteByte(block_end+ui1, bufSS[ui1]);
+	FlashWriteByte(block+ui1, bufSS[ui1]);
     }
   }
 
   /* upate valid */
+  item_valid &= ~(1 << (addr%0x7));
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_valid[id/8]), (uint8_t *)&item_valid, sizeof(uint8_t));
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
   ui1--;
@@ -933,6 +953,7 @@ flash_sale_add(uint8_t *sale)
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&sale_end, sizeof(uint16_t));
   sale_start_sector = sale_start & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
   sale_end_sector   = sale_end & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
+  assert(sale_start_sector != sale_end_sector);
 
   /* compute if there is overflow sector
      Implemented as a circular buffer. Possible combinations are
@@ -954,12 +975,13 @@ flash_sale_add(uint8_t *sale)
   if (sale_end_sector != sale_newend_sector) {
     /* If new sector is already occupied */
     for (; sale_start_sector==sale_newend_sector; ) {
-      ui2 = FlashReadByte(sale_start);
-      sale_start += SALE_INFO_SIZEOF + (((ui2 & SALE_INFO_BYTE_NITEM_MASK) >> SALE_INFO_BYTE_NITEM_SHIFT) * SALE_SIZEOF);
+      /* Need to delete few sectors... on ToT */
+      flash_sale_free_old_sector();
+      /* */
+      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
       sale_start_sector = sale_start & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
     }
     FlashEraseSector(sale_newend_sector);
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
   }
 
   /* Bytes are available ..., just store */
@@ -981,7 +1003,7 @@ flash_sale_delete_month(uint8_t del_month)
   uint16_t sale_start, sale_end;
   uint16_t sale_start_sector, sale_end_sector, sale_newend_sector;
   uint8_t  nbytes, ui2;
-
+n
   /* init */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&sale_end, sizeof(uint16_t));
@@ -997,11 +1019,15 @@ flash_sale_delete_month(uint8_t del_month)
       ui3[0] = FlashReadByte(sale_start);
       ui3[1] = FlashReadByte(sale_start+1);
       ui3[2] = FlashReadByte(sale_start+2);
-      if (del_month == si->date_mm) {
+      if ((del_month == si->date_mm) && (sale_start!=sale_end)) {
 	sale_start += SALE_INFO_SIZEOF + (((ui3[0] & SALE_INFO_BYTE_NITEM_MASK) >> SALE_INFO_BYTE_NITEM_SHIFT) * SALE_SIZEOF);
+	if (sale_start >= FLASH_DATA_END) {
+	  sale_start = FLASH_DATA_START + (sale_start % FLASH_SECTOR_SIZE);
+	}
 	sale_start_sector = sale_start & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
       }
     } while(del_month == si->date_mm);
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
   }
 }
 
@@ -1018,21 +1044,112 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
   else if (dmy[0] <= 21) idx += 2;
   else idx += 3;
 
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[idx]), (uint8_t *)&si, sizeof(uint16_t));
-  if (0 == si) return (void *)si;
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[idx]), (uint8_t *)&vptr, sizeof(uint16_t));
+  si = (sale_info *)vptr;
+  if (0 == si) return (void *)FLASH_ADDR_INVALID;
 
-  for (ui1=0, vptr=(uint16_t)si; ui1<id; ui1++, vptr=(uint16_t)si) {
+  for (ui1=0; ui1<id; vptr=(uint16_t)si) {
     uint8_t ui3[3];
     sale_info* si_t = ui3;
     ui3[0] = FlashReadByte((uint16_t)si);
     ui3[1] = FlashReadByte((uint16_t)(si+1));
     ui3[2] = FlashReadByte((uint16_t)(si+2));
-    if ( (dmy[0] == si_t->date_dd) && (dmy[1] == si_t->date_mm) ) {
-      si = (sale_info *)( ((uint8_t *)si) + SALE_INFO_SIZEOF + (((ui3[0] & SALE_INFO_BYTE_NITEM_MASK) >> SALE_INFO_BYTE_NITEM_SHIFT) * SALE_SIZEOF) );
+    if (dmy[1] != si_t->date_mm)
+      return (void *) FLASH_ADDR_INVALID;
+    /* move past this record */
+    si = (sale_info *)( ((uint8_t *)si) + SALE_INFO_SIZEOF + (((ui3[0] & SALE_INFO_BYTE_NITEM_MASK) >> SALE_INFO_BYTE_NITEM_SHIFT) * SALE_SIZEOF) );
+    if (dmy[0] < si_t->date_dd) {
+    } else if (dmy[0] == si_t->date_dd) {
+      ui1++;
     } else { /* less # items for this day */
-      return (void *) 0;
+      return (void *) FLASH_ADDR_INVALID;
     }
   }
 
   return vptr;
+}
+
+void
+flash_sale_free_old_sector()
+{
+  uint16_t ui1, ui6;
+  uint8_t ui2, ui4, ui5;
+  uint16_t sale_start, sale_end;
+  uint16_t sale_start_sector, sale_end_sector, sale_newstart_sector;
+
+  /* Find the first reference to sale data */
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui2, sizeof(uint8_t));
+  ui4 = ui2 = (ui2-1)*4;
+  do {
+    ui4 %= 12*4;
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui4]), (uint8_t *)&ui1, sizeof(uint16_t));
+    if (0 != ui1) break;
+    ui4++;
+  } while (ui2 != ui4);
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
+  sale_start_sector = sale_start & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&sale_end, sizeof(uint16_t));
+  sale_end_sector = sale_end & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
+  assert(ui1 == sale_start);
+
+  /* We just need to delete one sector of data */
+  {
+    uint8_t ui3[3];
+    sale_info *si = (void *)ui3;
+    for (sale_newstart_sector=sale_start_sector; sale_newstart_sector==sale_start_sector;) {
+      ui3[0] = FlashReadByte(sale_start);
+      if (sale_start!=sale_end) {
+	sale_start += SALE_INFO_SIZEOF + (((ui3[0] & SALE_INFO_BYTE_NITEM_MASK) >> SALE_INFO_BYTE_NITEM_SHIFT) * SALE_SIZEOF);
+	if (sale_start >= FLASH_DATA_END) {
+	  sale_start = FLASH_DATA_START + (sale_start % FLASH_SECTOR_SIZE);
+	}
+	sale_newstart_sector = sale_start & ~((uint16_t) (FLASH_SECTOR_SIZE-1));
+      }
+    }
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
+  }
+
+  {
+    /* Clear all month references before this month */
+    ui3[0] = FlashReadByte(sale_start);
+    ui3[1] = FlashReadByte(sale_start+1);
+    ui3[2] = FlashReadByte(sale_start+2);
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui2, sizeof(uint8_t));
+    if (ui2 != si->date_mm) { /* we have deleted few months of data */
+      ui1 = 0;
+      for (ui2=INCR_MONTH(ui2); ui2!=si->date_mm; ui2=INCR_MONTH(ui2)) {
+	ui5 = (ui2-1)*4;
+	for (ui4=0; ui4<4; ui4++) {
+	  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui5+ui4]), (uint8_t *)&ui1, sizeof(uint16_t));
+	}
+      }
+      /* move pointers */
+      ui2 = si->date_mm;
+      ui2 = (ui2-1)*4;
+      for (ui1=0, ui6=0, ui4=0, ui5=8; ui4<4; ui4++, ui5+=7) {
+	if (si->date_dd < ui5) {
+	  if (0 == ui1)
+	    ui1 = sale_start;
+	  else
+	    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui2+ui4]), (uint8_t *)&ui1, sizeof(uint16_t));
+	}
+	EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr[ui4]), (uint8_t *)&ui1, sizeof(uint16_t));
+	EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui2+ui4]), (uint8_t *)&ui6, sizeof(uint16_t));
+      }
+      assert(0 != ui1);
+    } else { /* we have deleted < 1 month of data */
+      for (ui1=0, ui6=0, ui4=0, ui5=8; ui4<4; ui4++, ui5+=7) {
+	if (si->date_dd < ui5) {
+	  if (0 == ui1)
+	    ui1 = sale_start;
+	  else
+	    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_old_ptr[ui4]), (uint8_t *)&ui1, sizeof(uint16_t));
+	}
+	EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr[ui4]), (uint8_t *)&ui1, sizeof(uint16_t));
+      }
+      assert(0 != ui1);
+    }
+    ui2 = si->date_mm;
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui2, sizeof(uint8_t));
+  }
 }

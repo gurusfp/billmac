@@ -92,4 +92,7 @@ void timerTimeGet(uint8_t *hm);
 #define PREV_MONTH(M)       \
   ((M==1) ? 12 : (M-1))
 
+#define INCR_MONTH(M)       \
+  ((M==12) ? 1 : (M+1))
+
 #endif

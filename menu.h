@@ -157,11 +157,14 @@ void menu_RunDiag(uint8_t mode);
 void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
 uint8_t menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx);
 void menu_main(void);
+
 void flash_item_add(uint8_t* byte_arr);
 void flash_item_delete(uint16_t id);
+
 void flash_sale_add(uint8_t *sale);
 void flash_sale_delete_month(uint8_t del_month);
 uint16_t flash_sale_find(uint8_t *dmy, uint16_t id);
 
-#define flash_item_find(id) (FLASH_ITEM_START + (id * ITEM_SIZEOF))
+#define flash_item_find(id) ((id<ITEM_MAX) ? (FLASH_ITEM_START + (id * ITEM_SIZEOF)) : FLASH_ADDR_INVALID)
+
 #endif

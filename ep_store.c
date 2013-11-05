@@ -25,17 +25,10 @@ ep_store_init(void)
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.bill_id[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t));
     eeprom_idx++;
     eeprom_idx %= EEPROM_DYNARR_MAX;
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.bill_id[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t));
+    EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.bill_id[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t));
 
-    /* we are good, modify params and commit */
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&eeprom_idx, sizeof(uint8_t));
-    CRC16_Init();
-    for (ui1=0; ui1<((uint16_t)&(EEPROM_DATA.eeprom_sig[0])); ui1++) {
-      EEPROM_STORE_READ(ui1, &ui2, sizeof(uint8_t));
-      CRC16_Update(ui2);
-    }
-    eeprom_crc = CRC16_High; eeprom_crc <<= 8; eeprom_crc |= CRC16_Low;
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&eeprom_crc, sizeof(uint16_t));
+    /* Finally write the signature */
+    EEPROM_STORE_WRITE_Sig;
 
     return;
   }
@@ -45,40 +38,37 @@ ep_store_init(void)
   LCD_WR_LINE(0, 0, "Data Fail, Loss");
   LCD_WR_LINE(1, 0, "Serv if Repeat");
 
-  /* clear all bytes of flash*/
+  /* clear all bytes of EEPROM */
   ui2 = 0;
   for (ui1=0; ui1<sizeof(struct ep_store_layout); ui1++) {
-    EEPROM_STORE_WRITE(ui1, (uint8_t *)&ui2, sizeof(uint8_t));
+    EEPROM_STORE_WRITE_NoSig(ui1, (uint8_t *)&ui2, sizeof(uint8_t));
   }
 
   /* */
-  ui1 = FLASH_ITEM_START;
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&ui1, sizeof(uint16_t));
+  ui1 = 0;
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&ui1, sizeof(uint16_t));
+  for (ui1=FLASH_ITEM_START; ui1<FLASH_ITEM_END; ui1+=FLASH_SECTOR_SIZE) {
+    FlashEraseSector(ui1);
+  }
 
   /* for data location, init and clear the first sector */
   ui1 = FLASH_DATA_START;
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&ui1, sizeof(uint16_t));
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&ui1, sizeof(uint16_t));
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&ui1, sizeof(uint16_t));
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&ui1, sizeof(uint16_t));
   FlashEraseSector(FLASH_DATA_START);
 
   /* */
   timerDateGet(ymd);
   ui2 = PREV_MONTH(ymd[1]);
-  ui2 = PREV_MONTH(ui2);
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui2, sizeof(uint8_t));
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui2, sizeof(uint8_t));
 
   /* */
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.prn_header[0]), (uint8_t *)"Example Hotel", sizeof(uint8_t));
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.prn_header[0]), (uint8_t *)"Example Hotel", sizeof(uint8_t));
 
   /* Recompute hash */
-  CRC16_Init();
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&eeprom_idx, sizeof(uint8_t));
-  for (ui1=0; ui1<((uint16_t)&(EEPROM_DATA.eeprom_sig[0])); ui1++) {
-    EEPROM_STORE_READ(ui1, &ui2, sizeof(uint8_t));
-    CRC16_Update(ui2);
-  }
-  eeprom_crc = CRC16_High; eeprom_crc <<= 8; eeprom_crc |= CRC16_Low;
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&eeprom_crc, sizeof(uint16_t));
+  eeprom_idx = 0;
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&eeprom_idx, sizeof(uint8_t));
+  EEPROM_STORE_WRITE_Sig;
 
   /* */
   LCD_CLRSCR;
@@ -94,32 +84,30 @@ ep_store_init(void)
 void
 sale_index_it(sale_info *si, uint16_t ptr)
 {
-  uint8_t date, month, sale_date_old_ptr_month, ui2;
+  uint8_t date, month, ui2, ui3;
   uint16_t p1, ui1;
 
   /* check values */
   date = si->date_dd;
   month = si->date_mm;
-  assert ((date >= 1) && (date <=31));
+  assert ((date >= 1) && (date <= 31));
   assert ((month >= 1) && (month <= 12));
 
   /* if month is same, we have rolled back*/
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&sale_date_old_ptr_month, sizeof(uint8_t));
-  ui2 = PREV_MONTH(month);
-  if (PREV_MONTH(ui2) == sale_date_old_ptr_month) {
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&ui3, sizeof(uint8_t));
+  if (PREV_MONTH(month) == ui3) {
     /* first release data of prev 13th month */
-    if (0 != p1)  flash_sale_delete_month(sale_date_old_ptr_month);
+    flash_sale_delete_month(ui3);
     /* transfer 12th month to 13th month */
-    sale_date_old_ptr_month = PREV_MONTH(month)*4;
+    ui3 = (month-1)*4;
     for (ui2=0; ui2<4; ui2++) {
       /* then store 12th month data to 13th month */
-      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[sale_date_old_ptr_month+ui2]), (uint8_t *)&p1, sizeof(uint16_t));
+      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui3+ui2]), (uint8_t *)&p1, sizeof(uint16_t));
       EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr[ui2]), (uint8_t *)&p1, sizeof(uint16_t));
       p1 = 0;
-      EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_ptr[sale_date_old_ptr_month+ui2]), (uint8_t *)&p1, sizeof(uint16_t));
+      EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_ptr[ui3+ui2]), (uint8_t *)&p1, sizeof(uint16_t));
     }
-    sale_date_old_ptr_month = PREV_MONTH(month);
-    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&sale_date_old_ptr_month, sizeof(uint8_t));
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_date_old_ptr_month), (uint8_t *)&month, sizeof(uint8_t));
   }
 
   /* Check if required to be indexed */
@@ -138,6 +126,8 @@ sale_index_it(sale_info *si, uint16_t ptr)
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&ui2, sizeof(uint8_t));
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.bill_id[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
   if ((date != ((p1>>8)&0xFF)) || (month != (p1&0xFF))) {
+    p1 = date; p1<<=8; p1|=month;
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.date_month), (uint8_t *)&p1, sizeof(uint16_t));
     ui1 = 1;
   } else ui1++;
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.bill_id[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
