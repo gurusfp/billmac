@@ -252,7 +252,7 @@ menu_ShowBill(uint8_t mode)
     return;
 
   sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
-  if (FLASH_ADDR_INVALID ==ale_info) {
+  if (FLASH_ADDR_INVALID == sale_info) {
     ERROR("Not Found");
     return;
   }
