@@ -252,7 +252,7 @@ menu_ShowBill(uint8_t mode)
     return;
 
   sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
-  if (FLASH_ADDR_INVALID == sale_info) {
+  if (FLASH_ADDR_INVALID ==ale_info) {
     ERROR("Not Found");
     return;
   }
@@ -262,7 +262,7 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     /* FIXME: print */
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    //    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), 1);
+    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
   }
 }
 
@@ -888,7 +888,7 @@ void
 flash_item_delete(uint16_t id)
 {
   uint16_t ui1, addr;
-  uint8_t item_valid;
+  uint8_t item_valid, ui2, ui3;
   uint8_t *block;
 
   /* do nothing if already invalid */
@@ -901,6 +901,48 @@ flash_item_delete(uint16_t id)
   /* input is id, compute addr */
   addr = flash_item_find(id);
   block = (uint8_t *) (addr & ~((uint16_t)(FLASH_SECTOR_SIZE-1)));
+
+  /* Save the item to EEPROM */
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_mod_his_ptr), (uint8_t *)&item_valid, sizeof(uint8_t));
+  ui1 = (uint16_t)&(EEPROM_DATA.item_mod_his[item_valid]);
+  for (ui2=0; ui2<ITEM_SIZEOF; ui1++, ui2++) {
+    ui3 = FlashReadByte(addr+ui2);
+    EEPROM_STORE_WRITE_NoSig(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
+  }
+  item_valid++;
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.item_mod_his_ptr), (uint8_t *)&item_valid, sizeof(uint8_t));
+  EEPROM_STORE_WRITE_Sig;
+
+  /* Modify lookups accordingly */
+  {
+    uint16_t sale_start, sale_end;
+    uint8_t  n_bytes;
+    billing *bi = (void *)bufSS;
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&sale_end, sizeof(uint16_t));
+    for (; sale_start!=sale_end;) {
+      for (ui2=0; ui2<SALE_INFO_SIZEOF; ui2++)
+	bufSS[ui2] = FlashReadByte(sale_start+ui2);
+      n_bytes = SALE_INFO_SIZEOF + (bi->info.n_items * (uint16_t)SALE_SIZEOF);
+      if (0 == (bi->info.deleted & SALE_INFO_DELETED)) {
+	for (ui2=SALE_INFO_SIZEOF; ui2<n_bytes; ui2++)
+	  bufSS[ui2] = FlashReadByte(sale_start+ui2);
+	for (ui2=0; ui2<bi->info.n_items; ui2++) {
+	  ui1 =  bi->items[ui2].item_id_h; ui1 <<= 8;
+	  ui1 |= bi->items[ui2].item_id;
+	  if (ui1 == id) {
+	    /* it has modified items */
+	    FlashWriteByte(sale_start+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_MODIFIED);
+	    break;
+	  }
+	}
+      }
+      sale_start += n_bytes;
+      if (sale_start >= FLASH_DATA_END) {
+	sale_start = FLASH_DATA_START + (sale_start % FLASH_SECTOR_SIZE);
+      }
+    }
+  }
 
   /* save start block */
   for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
@@ -1066,6 +1108,10 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
     }
   }
 
+  /* */
+  si = (sale_info *)vptr;
+  if ((si->deleted) & SALE_INFO_DELETED)
+    return (void *) FLASH_ADDR_INVALID;
   return vptr;
 }
 

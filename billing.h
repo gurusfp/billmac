@@ -27,7 +27,9 @@ typedef struct {
 } sale_item;
 
 /* 3 bytes */
-#define  SALE_INFO_ITEMS_NBITS  4
+#define  SALE_INFO_ITEMS_NBITS     4
+#define  SALE_INFO_DELETED      0x80
+#define  SALE_INFO_MODIFIED     0x40
 typedef struct {
   uint16_t  n_items:SALE_INFO_ITEMS_NBITS;
 

@@ -4,11 +4,12 @@
 #define EEPROM_DYNARR_MAX    8
 #define HEADER_MAX_SZ       70
 #define FOOTER_MAX_SZ       24
+#define MOD_HIS_SZ          35
 
 /* Available bytes : 8K : 8192 */
 struct ep_store_layout {
   uint8_t   item_mod_his_ptr;       /*             1 */
-  item      item_mod_his[35];       /* 20*35  =  700 */
+  item      item_mod_his[MOD_HIS_SZ]; /* 20*35=  700 */
 
   /* sale constants */
   uint16_t  sale_start;             /*             2 */
