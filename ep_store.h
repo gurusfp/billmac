@@ -5,8 +5,9 @@
 #define HEADER_MAX_SZ       70
 #define FOOTER_MAX_SZ       24
 #define MOD_HIS_SZ          35
+#define NUM_TESTING_BYTES    3
 
-/* Available bytes : 8K : 8192 */
+/* Available : 8K : 8192 */
 struct ep_store_layout {
   uint8_t   item_mod_his_ptr;       /*             1 */
   item      item_mod_his[MOD_HIS_SZ]; /* 20*35=  700 */
@@ -49,7 +50,10 @@ struct ep_store_layout {
   uint8_t   corrupted;              /*             1 */
   uint8_t   eeprom_idx;             /*             1 */
   uint16_t  eeprom_sig[EEPROM_DYNARR_MAX]; /*     16 */
-};                                  /* Total  = 1021 */
+
+  /* used for testing purposes */
+  uint8_t   testing[NUM_TESTING_BYTES]; /*         3 */
+};                                  /* Total  = 1024 */
 
 #define EEPROM_DATA         (*((struct ep_store_layout *)0))
 #define EEPROM_STORE_READ   i2cReadBytes

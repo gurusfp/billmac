@@ -566,6 +566,24 @@ menu_SetDateTime(uint8_t mode)
 void
 menu_RunDiag(uint8_t mode)
 {
+  uint16_t ui1;
+  uint8_t  ui2, ui3, ui4;
+
+  /* Run LCD
+     Run slowly and make user see if there is any error
+   */
+  /* Run Printer : Print test page
+   */
+  /* Verify unused EEPROM spacesd : Write/readback
+   */
+  /* FIXME: randomize ui3 */
+  for (ui2=0; ui2<NUM_TESTING_BYTES; ui2++) {
+    EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.testing[ui2]), &ui3, sizeof(uint8_t)*LCD_MAX_COL);
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.testing[ui2]), &ui3, sizeof(uint8_t)*LCD_MAX_COL);
+  }
+
+  /* Verify Keypad : Ask user to press a key and display it
+   */
   menu_unimplemented();
 }
 
