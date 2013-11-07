@@ -153,8 +153,8 @@ menu_Init(void)
   /* FIXME: implement MENU_MRESET */
   MenuMode = MENU_MNOR;
 
-  if (2 == sizeof(sale_item))
-    ERROR("sale item not packed into 2 bytes");
+  if (3 == sizeof(sale_item))
+    ERROR("sale item not packed into 3 bytes");
   if (20 != sizeof(item))
     ERROR("item not packed in 20 bytes");
   if (4 != sizeof(sale_info))
@@ -262,7 +262,7 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     /* FIXME: print */
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
+    //    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
   }
 }
 
@@ -640,7 +640,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       lp++; col_id++;
     }
     if (KEY_SC_ENTER != key) {
-      KbdData = 0;
+      KBD_RESET_KEY;
     }
   } while (key != KEY_SC_ENTER);
 
@@ -766,10 +766,10 @@ menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
     }
 
     if (KEY_SC_ENTER == KbdData) {
-      KbdData = 0;
+      KBD_RESET_KEY;
       return ret;
     }
-    KbdData = 0;
+    KBD_RESET_KEY;
   } while (1);
   assert (0);
 }
@@ -784,6 +784,8 @@ menu_main(void)
   key = 0;
 
 menu_main_start:
+  assert(KBD_NOT_HIT); /* ensures kbd for user-inputs */
+
   /* Check if the new assignment is mode appropriate */
   if ( (0 == (MenuMode & (menu_mode[menu_selected] & MENU_MODEMASK))) ||
        (menu_selected >= MENU_MAX) ) {
@@ -799,11 +801,13 @@ menu_main_start:
   }
 
   KBD_GET_KEY;
-  KBD_RESET_KEY;
 
   if (KEY_SC_ENTER == key) {
+    KBD_RESET_KEY;
     arg1.valid = MENU_ITEM_NONE;
     menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
+    assert (KBD_HIT);
+    KBD_RESET_KEY;
     arg2.valid = MENU_ITEM_NONE;
     menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
     (menu_handlers[menu_selected])(menu_mode[menu_selected]);
@@ -821,6 +825,10 @@ menu_main_start:
     if (menu_selected >= MENU_MAX)
       menu_selected = key;
   }
+
+  /* Clear Key press */
+  assert (KBD_HIT);
+  KBD_RESET_KEY;
 
   /* recursive call, capture the case when you have unexpected
      exit */
@@ -1045,7 +1053,7 @@ flash_sale_delete_month(uint8_t del_month)
   uint16_t sale_start, sale_end;
   uint16_t sale_start_sector, sale_end_sector, sale_newend_sector;
   uint8_t  nbytes, ui2;
-n
+
   /* init */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_end), (uint8_t *)&sale_end, sizeof(uint16_t));
@@ -1153,9 +1161,7 @@ flash_sale_free_old_sector()
       }
     }
     EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.sale_start), (uint8_t *)&sale_start, sizeof(uint16_t));
-  }
 
-  {
     /* Clear all month references before this month */
     ui3[0] = FlashReadByte(sale_start);
     ui3[1] = FlashReadByte(sale_start+1);

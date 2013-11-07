@@ -14,18 +14,42 @@ uint8_t *test_key = NULL;
 
 uint8_t kbd_reverse_map(uint8_t);
 
+uint8_t
+kbd_reverse_map(uint8_t in)
+{
+  uint8_t ui1;
+  for (ui1=0; ui1<(KCHAR_ROWS*KCHAR_COLS); ui1++) {
+    if (in == keyChars[ui1]) {
+      uint8_t ret, ui2;
+      ret = ui1/KCHAR_COLS;
+      ui2 = ui1%KCHAR_COLS;
+      if (ui2>=KCHAR_SHIFT_SZ) {
+	ui2 %= KCHAR_SHIFT_SZ;
+	ret |= KBD_SHIFT;
+      }
+      ret |= ui2<<4;
+      //      printf("kbd_reverse_map:0x%x\n", ret);
+      return ret;
+    }
+  }
+  printf("unable to map %0d\n", (uint32_t)in);
+  assert(0);
+}
+
 void
 get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 {
   static uint8_t do_correct = 0;
 
-  if (0 != KbdData) /* not yet consumed the old data */
+  if KBD_HIT
     return;
-  if (0xFF == test_key_idx) /* no data yet */
+  if (-1 == test_key_idx) /* no data yet */
     return;
+  assert(test_key_idx<=FLASH_SECTOR_SIZE);
   if ((0 == test_key[test_key_idx]) && (0 == do_correct)) { /* completed */
-    assert (0xFF != test_key_idx);
+    assert (-1 != test_key_idx);
     KbdData = KEY_SC_ENTER;
+    KbdDataAvail = 1;
     *p_key = KEY_SC_ENTER;
     *p_key_n = 1;
     *p_key_s = 0;
@@ -36,6 +60,7 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 
   if ((KEY_SC_ENTER==test_key[test_key_idx]) || (KEY_SC_LEFT==test_key[test_key_idx]) || (KEY_SC_RIGHT==test_key[test_key_idx])) {
     KbdData = test_key[test_key_idx];
+    KbdDataAvail = 1;
     *p_key = KbdData;
     *p_key_n = 1;
     *p_key_s = 0;
@@ -44,8 +69,8 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
     return;
   }
 
-  assert(0);
   KbdData = kbd_reverse_map(test_key[test_key_idx]);
+  KbdDataAvail = 1;
   test_key_idx++;
   if (2 <= do_correct) {
     do_correct = 0;
@@ -74,24 +99,3 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 #define KBD_NOT_HIT (0)
 #undef KBD_GET_KEY
 #define KBD_GET_KEY get_test_key(&key, &key_n, &key_s)
-
-uint8_t
-kbd_reverse_map(uint8_t in)
-{
-  uint8_t ui1;
-  for (ui1=0; ui1<(KCHAR_ROWS*KCHAR_COLS); ui1++) {
-    if (in == keyChars[ui1]) {
-      uint8_t ret, ui2;
-      ret = ui1/KCHAR_COLS;
-      ui2 = ui1%KCHAR_COLS;
-      if (ui2>=KCHAR_SHIFT_SZ) {
-	ui2 %= KCHAR_SHIFT_SZ;
-	ret |= KBD_SHIFT;
-      }
-      ret |= ui2<<4;
-      //      printf("kbd_reverse_map:0x%x\n", ret);
-      return ret;
-    }
-  }
-  assert(0);
-}
