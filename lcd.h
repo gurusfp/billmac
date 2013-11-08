@@ -87,15 +87,15 @@ uint8_t _lcd_idx = 0;
 }
 
 #define LCD_WR_LINE(x, y, str)  {	\
-  uint8_t ui1;			        \
-  lcd_buf_p = lcd_buf[x]+y;		\
+    uint8_t ui1, ui2;			\
+  lcd_buf_p = lcd_buf[x];		\
   lcd_buf_p += y;			\
-  for (ui1=0; (ui1<LCD_MAX_COL);) {	\
-    if (0 == str[ui1]) {		\
+  for (ui1=0, ui2=0; (ui1<LCD_MAX_COL); ui1++) {	\
+    if (0 == str[ui2]) {		\
       lcd_buf_p[0] = ' ';		\
     } else {				\
-      lcd_buf_p[0] = str[ui1];		\
-      ui1++;				\
+      lcd_buf_p[0] = ((char *)str)[ui2];	\
+      ui2++;					\
     }					\
     lcd_buf_p++;			\
   }					\
@@ -104,7 +104,8 @@ uint8_t _lcd_idx = 0;
 
 #define LCD_WR_LINE_N(x, y, str, len)  {	\
   uint8_t ui1;			        \
-  lcd_buf_p = lcd_buf[x]+y;		\
+  lcd_buf_p = lcd_buf[x];		\
+  lcd_buf_p += y;			\
   for (ui1=0; (ui1<len); ui1++) {	\
     lcd_buf_p[0] = str[ui1];		\
     lcd_buf_p++;			\

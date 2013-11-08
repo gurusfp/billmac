@@ -38,6 +38,7 @@ main(void)
   /* */
   menu_Init();
   i2cInit();
+  ep_store_init();
 
   /* Passwd */
   for (loop=0; loop<1; loop++) {
@@ -51,11 +52,29 @@ main(void)
     KBD_RESET_KEY;
     menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR);
  
+    MenuMode = MENU_MNORMAL;
     menu_SetPasswd(MENU_MRESET);
+    assert(MENU_MNORMAL == MenuMode);
 
-    assert();
-    menu_SetPasswd(MENU_MNOR|MENU_MVALIDATE);
+    /* sometimes corrupt the password */
+    uint8_t corrupted = rand() % 2;
+    printf("Before corruption inp:'%s'\n", inp);
+    if (corrupted) {
+      inp[rand()%LCD_MAX_COL]++;
+    }
+    printf("After corruption inp:'%s'\n", inp);
 
+    INIT_TEST_KEYS(inp);
+    KBD_RESET_KEY;
+    menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR);
+    menu_SetPasswd(MENU_MNORMAL|MENU_MVALIDATE);
+
+    printf("Corrupted:%d\n", (uint32_t) corrupted);
+    if (corrupted) {
+      assert(MENU_MNORMAL == MenuMode);
+    } else {
+      assert(MENU_MSUPER == MenuMode);
+    }
   }
 
   return 0;

@@ -94,6 +94,14 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
   //  printf("do_correct:%d\n", do_correct);
 }
 
+uint8_t
+KbdIsShiftPressed(void)
+{
+  uint8_t shift = 0;
+
+  return shift;
+}
+
 /* Redefine certain macros for testing purpose */
 #undef KBD_NOT_HIT
 #define KBD_NOT_HIT (0)

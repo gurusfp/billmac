@@ -145,13 +145,12 @@ uint8_t menu_str1[] =
   ;
 
 /* */
-static uint8_t MenuMode = MENU_MNOR;
+static uint8_t MenuMode = MENU_MNORMAL;
 
 void
 menu_Init(void)
 {
-  /* FIXME: implement MENU_MRESET */
-  MenuMode = MENU_MNOR;
+  MenuMode = KbdIsShiftPressed() ? MENU_MSUPER : MENU_MNORMAL;
 
   if (3 == sizeof(sale_item))
     ERROR("sale item not packed into 3 bytes");

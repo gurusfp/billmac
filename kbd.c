@@ -80,3 +80,18 @@ KbdScan(void) __naked
     RET
   __endasm;
 }
+
+uint8_t
+KbdIsShiftPressed(void)
+{
+  uint8_t shift = 0;
+
+  if (0xFF != KBD_RC) {
+    KBD_R2=0;
+    DELAY1(0x4);
+    if (KBD_C4==0) { shift = 0x80; }
+  }
+
+  KBD_RC = 0xFF;
+  return shift;
+}

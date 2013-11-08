@@ -20,7 +20,7 @@ ep_store_init(void)
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.eeprom_idx), (uint8_t *)&eeprom_idx, sizeof(uint8_t));
   eeprom_crc = CRC16_High; eeprom_crc <<= 8; eeprom_crc |= CRC16_Low;
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.eeprom_sig[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t));
-  if (eeprom_crc == ui1) {
+  if ((eeprom_idx < EEPROM_DYNARR_MAX) && (eeprom_crc == ui1)) {
     /* */
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.bill_id[eeprom_idx]), (uint8_t *)&ui1, sizeof(uint16_t));
     eeprom_idx++;

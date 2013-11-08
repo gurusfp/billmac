@@ -26,9 +26,11 @@ void
 i2cWriteBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
 {
   assert (addr < I2C_SIZE);
-  for (; n_bytes>0; n_bytes--) {
-    i2c_bytes[addr] = data[0];
-    addr++, data++;
+  if (addr < I2C_SIZE) {
+    for (; n_bytes>0; n_bytes--) {
+      i2c_bytes[addr] = data[0];
+      addr++, data++;
+    }
   }
 }
 
