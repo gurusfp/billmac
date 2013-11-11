@@ -41,8 +41,9 @@ main(void)
   ep_store_init();
 
   /* Passwd */
-  for (loop=0; loop<1; loop++) {
-    for (ui1=0; ui1<LCD_MAX_COL/2; ui1++) {
+  for (loop=0; loop<1000; loop++) {
+    uint16_t passwd_size = ( rand() % (LCD_MAX_COL-1) ) + 1;
+    for (ui1=0; ui1<passwd_size; ui1++) {
       if (0 == (rand() % 3))
 	inp[ui1] = 'A' + (rand()%26);
       else
@@ -58,23 +59,60 @@ main(void)
 
     /* sometimes corrupt the password */
     uint8_t corrupted = rand() % 2;
-    printf("Before corruption inp:'%s'\n", inp);
+    //    printf("Before corruption inp:'%s'\n", inp);
     if (corrupted) {
-      inp[rand()%LCD_MAX_COL]++;
+      inp[rand()%passwd_size]++;
     }
-    printf("After corruption inp:'%s'\n", inp);
+    //    printf("After corruption inp:'%s'\n", inp);
 
     INIT_TEST_KEYS(inp);
     KBD_RESET_KEY;
     menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR);
     menu_SetPasswd(MENU_MNORMAL|MENU_MVALIDATE);
 
-    printf("Corrupted:%d\n", (uint32_t) corrupted);
+    //    printf("Corrupted:%d\n", (uint32_t) corrupted);
     if (corrupted) {
+      //      printf("MenuMode:0x%x\n", (uint32_t)MenuMode);
       assert(MENU_MNORMAL == MenuMode);
     } else {
       assert(MENU_MSUPER == MenuMode);
     }
+  }
+
+  /* modvat */
+  for (loop=0; loop<1; loop++) {
+    uint32_t vat = (rand()%100)*100 + (rand()%100);
+    uint32_t vat1 = vat;
+    LCD_CLRSCR;
+    for (ui1=0; ui1<LCD_MAX_COL; ui1++)
+      inp[ui1] = ' ';
+    for (ui1=0; ui1<4; ui1++) {
+      uint16_t ui2 = vat % 10;
+      vat /= 10;
+      inp[3-ui1] = '0' + ui2;
+    }
+    INIT_TEST_KEYS(inp);
+    KBD_RESET_KEY;
+    printf("inp is %s\n", inp);
+    menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR);
+
+    /* */
+    arg1.valid = MENU_ITEM_NONE;
+    LCD_CLRSCR;
+    menu_getopt("sdlkfjlaksfklas", &arg1, MENU_ITEM_FLOAT);
+
+    /* select input */
+    uint16_t sel = rand() % 4;
+    uint16_t ui2;
+    inp[0] = 0; inp[1] = 0; inp[2] = 0; inp[3] = 0;
+    for (ui1=0; ui1<sel; ui1++)
+      inp[ui1] = rand()%2 ? KEY_SC_LEFT : KEY_SC_RIGHT;
+
+    menu_ModVat(MENU_MNORMAL);
+    EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[sel]), (uint8_t *)&ui2, sizeof(uint16_t));
+    printf("ui2:%0d vat1:%0d\n", (uint32_t) ui2, (uint32_t) vat1);
+    assert(ui2 == vat1);
+
   }
 
   return 0;

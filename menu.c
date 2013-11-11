@@ -101,11 +101,11 @@ uint8_t keyChars[] = {
   /* KCHAR_ROWS x KCHAR_COLS */
   '0', ' ', '.', ',', ')', '+', '?', '_', ':',
   '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
-  '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '`',
-  '3', 'g', 'h', 'i', '#', 'G', 'H', 'I', '{',
-  '4', 'j', 'k', 'l', '$', 'J', 'K', 'L', '}',
-  '5', 'm', 'n', 'o', '%', 'M', 'N', 'O', '|',
-  '6', 'p', 'q', 'r', '^', 'P', 'Q', 'R', '\\',
+  '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '{',
+  '3', 'g', 'h', 'i', '#', 'G', 'H', 'I', '}',
+  '4', 'j', 'k', 'l', '$', 'J', 'K', 'L', '[',
+  '5', 'm', 'n', 'o', '%', 'M', 'N', 'O', ']',
+  '6', 'p', 'q', 'r', '^', 'P', 'Q', 'R', '|',
   '7', 's', 't', 'u', '&', 'S', 'T', 'U', '/',
   '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
   '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
@@ -431,17 +431,20 @@ menu_ModVat(uint8_t mode)
 
   for (ui2=0; ui2<4; ui2++) {
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
-    for (ui3=0; ui3<4; ui3++) {
-      (choice+(ui2*MENU_PROMPT_LEN)+MENU_PROMPT_LEN-ui3)[0] = '0' + ui1%10;
+    printf("choice ui1:%0d\n", (uint32_t) ui1);
+    for (ui3=0; ui3<MENU_PROMPT_LEN; ui3++) {
+      *(choice+(ui2*MENU_PROMPT_LEN)+MENU_PROMPT_LEN-1-ui3) = '0' + ui1%10;
       ui1 /= 10;
     }
   }
   ui3 = menu_getchoice(menu_str1+(MENU_STR1_IDX_REPLA*MENU_PROMPT_LEN), choice, 4);
+  printf("Choice:%s\n", choice);
   assert(ui3 < 4);
 
   ui1 = arg1.value.integer.i8;
   ui1 <<= 16;
   ui1 |= arg1.value.integer.i16;
+  printf("Obtained integer:%0d\n", (uint32_t)ui1);
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.vat[ui3]), (uint8_t *)&ui1, sizeof(uint16_t));
 }
 
@@ -753,10 +756,8 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
     arg->valid = item_type;
   } else if (opt & MENU_ITEM_OPTIONAL) {
   } else if ((opt & MENU_ITEM_DONTCARE_ON_PREV) && (arg == &arg2)) {
-  }
-#ifdef DEBUG
-  else assert(0);
-#endif
+  } else
+    assert(0);
 }
 
 uint8_t
@@ -822,10 +823,12 @@ menu_main_start:
   if (KEY_SC_ENTER == key) {
     KBD_RESET_KEY;
     arg1.valid = MENU_ITEM_NONE;
+    LCD_CLRSCR;
     menu_getopt(menu_prompt_str+((menu_prompts[menu_selected<<1])<<2), &arg1, menu_args[(menu_selected<<1)]);
     assert (KBD_HIT);
     KBD_RESET_KEY;
     arg2.valid = MENU_ITEM_NONE;
+    LCD_CLRSCR;
     menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
     (menu_handlers[menu_selected])(menu_mode[menu_selected]);
   } else if (KEY_SC_LEFT == key) {
