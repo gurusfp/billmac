@@ -160,7 +160,9 @@ menu_Init(void)
     ERROR("item not packed in 20 bytes");
   if (0 != ((FLASH_ITEM_END-FLASH_ITEM_START)%sizeof(item)))
     ERROR("item type wrongly packed");
-
+  if (3 == sizeof(item_bill))
+    ERROR("item_bill is of wrong size");
+  
   assert(sizeof(billing) <= FLASH_SECTOR_SIZE);
   assert(ITEM_SIZEOF < (1<<8));
 }
@@ -193,8 +195,7 @@ get_more_items:
 
     /* */
     ui2 = bi->info.n_items;
-    bi->items[ui2].item_id = (uint8_t) arg2.value.integer.i16;
-    bi->items[ui2].item_id_h = (uint8_t) (arg2.value.integer.i16>>8);
+    bi->items[ui2].item_id = arg2.value.integer.i16;
     bi->addrs[ui2] = item_addr;
 
     do {
@@ -348,26 +349,61 @@ menu_DelItem(uint8_t mode)
   flash_item_delete(arg1.value.integer.i16);
 }
 
+static uint8_t
+poppulate_billing(uint16_t recordp, uint8_t *buf)
+{
+  billing *bp = (void *)buf;
+  uint8_t ui2, ui3, ui4;
+
+  for (ui2=0; ui2<SALE_INFO_SIZEOF; ui2++) {
+    bufSS[ui2] = FlashReadByte(recordp+ui2);
+  }
+  /* retrieve all data */
+  for (ui3=0; ui3<(ITEM_SIZEOF*(bp->info.n_items)); ui3++) {
+    bufSS[ui2] = FlashReadByte(recordp+ui2);
+  }
+  /* populate pointers */
+  for (ui3=0; ui3<(bp->info.n_items); ui3++) {
+    bp->addrs[ui3] = flash_item_find((uint16_t)(bp->items[ui3].item_id));
+  }
+}
+
+
 void
 menu_DayItemBill(uint8_t mode)
 {
-  menu_unimplemented();
+  uint8_t ui2, ui3;
+  billing *bp = (void *)bufSS;
+
+  uint8_t  max_records_per_loop = FLASH_SECTOR_SIZE / sizeof(item_bill);
+  uint8_t  num_loops            = (ITEM_MAX+max_records_per_loop-1) / max_records_per_loop;
+
+  uint16_t start_record = flash_sale_find((uint8_t *)&(arg1.value.date), 1);
+  if (FLASH_ADDR_INVALID == start_record)
+    return;
+
+  uint16_t next_record = start_record;
+  for (ui2=0; ui2<num_loops; ui2++) {
+    ui3 = poppulate_billing(next_record, bufSS);
+
+    if (bp->date_mm != arg1.value.date.month) {
+      assert(start_record != next_record);
+      return;
+    }
+    if (bp->date_dd == arg1.value.date.date) {
+      /* print : could contain delted record */
+    } else {
+      ui3 -= SALE_INFO_SIZEOF;
+    }
+
+    /* atleast one record, move past this */
+    assert(start_record != next_record);
+    next_record += ui3;
+  }
 }
 
 void
 menu_DayAllBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_DayBillPrned(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_DayDupBill(uint8_t mode)
 {
   menu_unimplemented();
 }
@@ -391,12 +427,6 @@ menu_MonAllBill(uint8_t mode)
 }
 
 void
-menu_MonBillPrned(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
 menu_MonTaxReport(uint8_t mode)
 {
   menu_unimplemented();
@@ -410,12 +440,6 @@ menu_AllItemBill(uint8_t mode)
 
 void
 menu_AllFullBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_TaxReport(uint8_t mode)
 {
   menu_unimplemented();
 }
@@ -953,9 +977,7 @@ flash_item_delete(uint16_t id)
 	for (ui2=SALE_INFO_SIZEOF; ui2<n_bytes; ui2++)
 	  bufSS[ui2] = FlashReadByte(sale_start+ui2);
 	for (ui2=0; ui2<bi->info.n_items; ui2++) {
-	  ui1 =  bi->items[ui2].item_id_h; ui1 <<= 8;
-	  ui1 |= bi->items[ui2].item_id;
-	  if (ui1 == id) {
+	  if (bi->items[ui2].item_id == id) {
 	    /* it has modified items */
 	    FlashWriteByte(sale_start+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_MODIFIED);
 	    break;

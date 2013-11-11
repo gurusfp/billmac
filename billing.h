@@ -20,10 +20,9 @@ typedef struct {
 
 /* 2 bytes */
 typedef struct {
-  uint8_t   item_id;
-  uint8_t   item_id_h:1;
-  uint8_t   unused:3;
-  uint8_t   num_sale:4;
+  uint16_t   item_id:9;
+  uint16_t   unused:3;
+  uint16_t   num_sale:4;
 } sale_item;
 
 /* 3 bytes */
