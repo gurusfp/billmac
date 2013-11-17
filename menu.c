@@ -160,8 +160,6 @@ menu_Init(void)
     ERROR("item not packed in 20 bytes");
   if (0 != ((FLASH_ITEM_END-FLASH_ITEM_START)%sizeof(item)))
     ERROR("item type wrongly packed");
-  if (3 == sizeof(item_bill))
-    ERROR("item_bill is of wrong size");
   
   assert(sizeof(billing) <= FLASH_SECTOR_SIZE);
   assert(ITEM_SIZEOF < (1<<8));
@@ -375,15 +373,13 @@ menu_DayItemBill(uint8_t mode)
   uint8_t ui2, ui3;
   billing *bp = (void *)bufSS;
 
-  uint8_t  max_records_per_loop = FLASH_SECTOR_SIZE / sizeof(item_bill);
-  uint8_t  num_loops            = (ITEM_MAX+max_records_per_loop-1) / max_records_per_loop;
-
   uint16_t start_record = flash_sale_find((uint8_t *)&(arg1.value.date), 1);
   if (FLASH_ADDR_INVALID == start_record)
     return;
 
   uint16_t next_record = start_record;
-  for (ui2=0; ui2<num_loops; ui2++) {
+
+  while (1) {
     ui3 = poppulate_billing(next_record, bufSS);
 
     if (bp->date_mm != arg1.value.date.month) {
@@ -391,7 +387,7 @@ menu_DayItemBill(uint8_t mode)
       return;
     }
     if (bp->date_dd == arg1.value.date.date) {
-      /* print : could contain delted record */
+      /* print : could contain deleted record */
     } else {
       ui3 -= SALE_INFO_SIZEOF;
     }
