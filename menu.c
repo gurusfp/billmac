@@ -166,12 +166,6 @@ menu_Init(void)
 }
 
 void
-menu_unimplemented(void)
-{
-  assert(0);
-}
-
-void
 menu_Billing(uint8_t mode)
 {
   uint8_t ui2;
@@ -347,95 +341,80 @@ menu_DelItem(uint8_t mode)
   flash_item_delete(arg1.value.integer.i16);
 }
 
-static uint8_t
-poppulate_billing(uint16_t recordp, uint8_t *buf)
-{
-  billing *bp = (void *)buf;
-  uint8_t ui2, ui3, ui4;
-
-  for (ui2=0; ui2<SALE_INFO_SIZEOF; ui2++) {
-    bufSS[ui2] = FlashReadByte(recordp+ui2);
-  }
-  /* retrieve all data */
-  for (ui3=0; ui3<(ITEM_SIZEOF*(bp->info.n_items)); ui3++) {
-    bufSS[ui2] = FlashReadByte(recordp+ui2);
-  }
-  /* populate pointers */
-  for (ui3=0; ui3<(bp->info.n_items); ui3++) {
-    bp->addrs[ui3] = flash_item_find((uint16_t)(bp->items[ui3].item_id));
-  }
-}
-
-
 void
-menu_DayItemBill(uint8_t mode)
+menu_BillReports(uint8_t mode)
 {
-  uint8_t ui2, ui3;
+  uint8_t ui3, ui4;
   billing *bp = (void *)bufSS;
 
   uint16_t start_record = flash_sale_find((uint8_t *)&(arg1.value.date), 1);
-  if (FLASH_ADDR_INVALID == start_record)
-    return;
-
   uint16_t next_record = start_record;
 
   while (1) {
-    ui3 = poppulate_billing(next_record, bufSS);
+    /* Only process valid records... */
+    if (FLASH_ADDR_INVALID == start_record)
+      return;
 
-    if (bp->date_mm != arg1.value.date.month) {
+    /* retrieve this bill data, exit if invalid condition */
+    for (ui4=0; ui4<SALE_INFO_SIZEOF; ui4++) {
+      bufSS[ui4] = FlashReadByte(next_record+ui4);
+    }
+    ui3 = mode & ~MENU_MODEMASK;
+    if ( (ui3 >= MENU_MDAYITEM) && (ui3 <= MENU_MMONTAX) && (bp->info.date_mm != arg1.value.date.month) ) {
       assert(start_record != next_record);
       return;
     }
-    if (bp->date_dd == arg1.value.date.date) {
-      /* print : could contain deleted record */
-    } else {
-      ui3 -= SALE_INFO_SIZEOF;
+
+    if ( (ui3 >= MENU_MDAYITEM) && (ui3 <= MENU_MDAYTAX) && (bp->info.date_dd != arg1.value.date.date) ) {
+      assert(start_record != next_record);
+      return;
+    }
+    for (ui3=0; ui3<(ITEM_SIZEOF*(bp->info.n_items)); ui3++, ui4++) {
+      bufSS[ui4] = FlashReadByte(next_record+ui4);
+    }
+    /* populate pointers */
+    for (ui3=0; ui3<(bp->info.n_items); ui3++) {
+      bp->addrs[ui3] = flash_item_find((uint16_t)(bp->items[ui3].item_id));
+    }
+
+    /* print after skipping deleted record */
+    if (0 == bp->info.deleted) {
+      ui3 = mode & ~MENU_MODEMASK;
+      /* FIXME */
+      if ((MENU_MDAYITEM == ui3) || (MENU_MMONITEM == ui3) || (MENU_MALLITEM == ui3))
+	menu_PrnItemBill(bp);
+      else if ((MENU_MDAYFULL == ui3) || (MENU_MMONFULL == ui3) || (MENU_MALLFULL == ui3))
+	menu_PrnFullBill(bp);
+      else if ((MENU_MDAYTAX == ui3) || (MENU_MMONTAX == ui3))
+	menu_PrnTaxReport(bp);
     }
 
     /* atleast one record, move past this */
     assert(start_record != next_record);
-    next_record += ui3;
+    next_record += ui4;
   }
 }
 
 void
-menu_DayAllBill(uint8_t mode)
+menu_unimplemented(void)
+{
+  assert(0);
+}
+
+void
+menu_PrnItemBill(billing *bp)
 {
   menu_unimplemented();
 }
 
 void
-menu_DayTaxReport(uint8_t mode)
+menu_PrnFullBill(billing *bp)
 {
   menu_unimplemented();
 }
 
 void
-menu_MonItemBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_MonAllBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_MonTaxReport(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_AllItemBill(uint8_t mode)
-{
-  menu_unimplemented();
-}
-
-void
-menu_AllFullBill(uint8_t mode)
+menu_PrnTaxReport(billing *bp)
 {
   menu_unimplemented();
 }
