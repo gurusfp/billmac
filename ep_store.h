@@ -2,7 +2,8 @@
 #define EP_STORE_H
 
 #define EEPROM_DYNARR_MAX    8
-#define HEADER_MAX_SZ       70
+#define HEADER_MAX_SZ       54
+#define SHOP_NAME_SZ        16
 #define FOOTER_MAX_SZ       24
 #define MOD_HIS_SZ          35
 #define NUM_TESTING_BYTES    3
@@ -38,7 +39,8 @@ struct ep_store_layout {
   uint16_t  bill_id[EEPROM_DYNARR_MAX];  /*       16 */ /* 907 */
 
   /* banners */
-  uint8_t   prn_header[HEADER_MAX_SZ]; /*         70 */
+  uint8_t   shop_name [HEADER_MAX_SZ]; /*         16 */
+  uint8_t   prn_header[HEADER_MAX_SZ]; /*         54 */
   uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */ /* 1001 */
 
   /* */

@@ -2,3 +2,8 @@
 #include <p89v51rd2.h>
 
 #include "printer.h"
+
+void
+printer_init(void)
+{
+}
