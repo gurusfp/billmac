@@ -430,20 +430,17 @@ menu_ModVat(uint8_t mode)
 
   for (ui2=0; ui2<4; ui2++) {
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[ui2]), (uint8_t *)&ui1, sizeof(uint16_t));
-    printf("choice ui1:%0d\n", (uint32_t) ui1);
     for (ui3=0; ui3<MENU_PROMPT_LEN; ui3++) {
       *(choice+(ui2*MENU_PROMPT_LEN)+MENU_PROMPT_LEN-1-ui3) = '0' + ui1%10;
       ui1 /= 10;
     }
   }
   ui3 = menu_getchoice(menu_str1+(MENU_STR1_IDX_REPLA*MENU_PROMPT_LEN), choice, 4);
-  printf("Choice:%s\n", choice);
   assert(ui3 < 4);
 
   ui1 = arg1.value.integer.i8;
   ui1 <<= 16;
   ui1 |= arg1.value.integer.i16;
-  printf("Obtained integer:%0d\n", (uint32_t)ui1);
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.vat[ui3]), (uint8_t *)&ui1, sizeof(uint16_t));
 }
 

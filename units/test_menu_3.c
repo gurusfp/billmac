@@ -80,7 +80,7 @@ main(void)
   }
 
   /* modvat */
-  for (loop=0; loop<1; loop++) {
+  for (loop=0; loop<1000; loop++) {
     uint32_t vat = (rand()%100)*100 + (rand()%100);
     uint32_t vat1 = vat;
     LCD_CLRSCR;
@@ -91,10 +91,10 @@ main(void)
       vat /= 10;
       inp[3-ui1] = '0' + ui2;
     }
-    INIT_TEST_KEYS(inp);
+    inp[4] = 0;
     KBD_RESET_KEY;
-    printf("inp is %s\n", inp);
-    menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR);
+    INIT_TEST_KEYS(inp);
+    //printf("inp is %s\n", inp);
 
     /* */
     arg1.valid = MENU_ITEM_NONE;
@@ -103,16 +103,51 @@ main(void)
 
     /* select input */
     uint16_t sel = rand() % 4;
-    uint16_t ui2;
-    inp[0] = 0; inp[1] = 0; inp[2] = 0; inp[3] = 0;
-    for (ui1=0; ui1<sel; ui1++)
-      inp[ui1] = rand()%2 ? KEY_SC_LEFT : KEY_SC_RIGHT;
+    uint16_t ui2 = rand()%2;
+    if (0 != ui2) {
+      ui2 = sel + 4*(rand()%8);
+      for (ui1=0; ui1<ui2; ui1++)
+	inp[ui1] = KEY_SC_RIGHT;
+      inp[ui1] = 0;
+    } else {
+      ui2 = (4-sel) + 4*(rand()%8);
+      for (ui1=0; ui1<ui2; ui1++)
+	inp[ui1] = KEY_SC_LEFT;
+      inp[ui1] = 0;
+    }
 
+    KBD_RESET_KEY;
+    INIT_TEST_KEYS(inp);
     menu_ModVat(MENU_MNORMAL);
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[sel]), (uint8_t *)&ui2, sizeof(uint16_t));
-    printf("ui2:%0d vat1:%0d\n", (uint32_t) ui2, (uint32_t) vat1);
+    //printf("sel:%0d ui2:%0d vat1:%0d\n", (uint32_t) sel, (uint32_t) ui2, (uint32_t) vat1);
     assert(ui2 == vat1);
+  }
 
+  /* menu_Header */
+  for (loop=0; loop<1; loop++) {
+    for (ui1=0; ui1<LCD_MAX_COL/2; ui1++) {
+      if (0 == (rand() % 3))
+	inp[ui1] = 'A' + (rand()%26);
+      else
+	inp[ui1] = 'a' + (rand()%26);
+    }
+    INIT_TEST_KEYS(inp);
+    KBD_RESET_KEY;
+    menu_getopt("Prompt 1", &arg1, MENU_ITEM_STR);
+    assert(0 == strncmp("Promp ?         ", lcd_buf, LCD_MAX_COL));
+
+    /* Generate random string for Header */
+    ui2 = rand() % HEADER_MAX_SZ;
+    for (ui1=0; ui1<ui2; ui1++) {
+      if (0 == (rand() % 3))
+	inp[ui1] = 'A' + (rand()%26);
+      else
+	inp[ui1] = 'a' + (rand()%26);
+    }
+    INIT_TEST_KEYS(inp);
+    KBD_RESET_KEY;
+    menu_Header(MENU_MSUPER);
   }
 
   return 0;
