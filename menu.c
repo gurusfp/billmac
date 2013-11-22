@@ -160,7 +160,8 @@ menu_Init(void)
     ERROR("item not packed in 20 bytes");
   if (0 != ((FLASH_ITEM_END-FLASH_ITEM_START)%sizeof(item)))
     ERROR("item type wrongly packed");
-  
+
+  assert(sizeof(uint8_t) == 1);
   assert(sizeof(billing) <= FLASH_SECTOR_SIZE);
   assert(ITEM_SIZEOF < (1<<8));
 }
@@ -224,11 +225,7 @@ get_more_items:
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.print_it), (uint8_t *)&ui2, sizeof(uint8_t));
   if (0 == ui2) { /* enabled */
     if (0 == menu_getchoice(menu_str1+(MENU_STR1_IDX_PRINT*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2)) {
-      /* print */
-      //  uint8_t buf[4];
-      //  item*   i_p = (void *)buf;
-      //    for (ui2=0; ui2<4; ui2++)
-      //      buf[ui2] = FlashReadByte(item_addr+ui2);
+      menu_PrnFullBill(bi);
     }
   }
 
@@ -238,10 +235,15 @@ get_more_items:
 void
 menu_ShowBill(uint8_t mode)
 {
+  uint8_t ui2, ui3, ui4;
   uint16_t sale_info;
 
-  if ((MENU_PR_NONE == arg1.valid) || (MENU_PR_NONE == arg2.valid))
+  if (MENU_PR_NONE == arg1.valid)
     return;
+
+  /* by default, select the first bill */
+  if (MENU_PR_NONE == arg2.valid)
+    arg2.value.integer.i16 = 1;
 
   sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
   if (FLASH_ADDR_INVALID == sale_info) {
@@ -249,12 +251,58 @@ menu_ShowBill(uint8_t mode)
     return;
   }
 
-  /* FIXME: First display before any operation */
+  /* Keep reacting to user inputs */
+  billing *bp = (void *)bufSS;
+  do {
+    /* retrieve & display bill */
+    while KBD_NOT_HIT {
+      sleep(10);
+    }
+    KBD_GET_KEY;
+
+    if (KEY_SC_PRINT == key) {
+      mode &= MENU_MODEMASK;
+      mode |= MENU_MPRINT;
+      break;
+    } else if (KEY_SC_LEFT == key) {
+      arg2.value.integer.i16 --;
+      sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
+      if (FLASH_ADDR_INVALID == sale_info) {
+	arg2.value.integer.i16 ++;
+      }
+    } else if (KEY_SC_RIGHT == key) {
+      arg2.value.integer.i16 ++;
+      sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
+      if (FLASH_ADDR_INVALID == sale_info) {
+	arg2.value.integer.i16 --;
+      }
+    } else if ( (KEY_SC_ENTER == key) || (KEY_SC_INVALID == key) ) {
+      break;
+    }
+
+    /* retrieve this bill data, exit if invalid condition */
+    for (ui4=0; ui4<SALE_INFO_SIZEOF; ui4++) {
+      bufSS[ui4] = FlashReadByte(next_record+ui4);
+    }
+    for (ui3=0; ui3<(ITEM_SIZEOF*(bp->info.n_items)); ui3++, ui4++) {
+      bufSS[ui4] = FlashReadByte(next_record+ui4);
+    }
+    /* populate pointers */
+    for (ui3=0; ui3<(bp->info.n_items); ui3++) {
+      bp->addrs[ui3] = flash_item_find((uint16_t)(bp->items[ui3].item_id));
+    }
+
+    /* FIXME: display */
+
+    KBD_RESET_KEY;
+  } while (1);
+  KBD_RESET_KEY;
 
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
-    /* FIXME: print */
+    menu_PrnFullBill(bp);
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    //    FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
+    if (FlashReadByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)) != SALE_INFO_DELETED)
+	FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
   }
 }
 
@@ -453,21 +501,34 @@ menu_Header(uint8_t mode)
   uint8_t chars = 0, ui2, ui3;
   uint8_t mode_max = ((mode&(~MENU_MODEMASK)) == MENU_MFOOTER) ? FOOTER_MAX_SZ : HEADER_MAX_SZ;
 
+  /* Enters with arg1 as valid */
   do {
-    if (MENU_ITEM_NONE != arg1.valid) {
-      for (ui2=0, ui3=0; (ui2<LCD_MAX_COL) && (0==ui3); ui2++) {
-	ui3 = (' ' == lcd_buf[1][ui2]) ? 1 : 0;
-      }
-      if (ui3) {
-	for (ui2=0; (ui2<LCD_MAX_COL) && (chars<mode_max); ui2++) {
-	  bufSS[ui2] = lcd_buf[1][ui2];
-	  chars++;
-	}
-      } else break;
+    if (MENU_ITEM_NONE == arg1.valid)
+      break;
+
+    /* check for valid chars */
+    for (ui2=0, ui3=0; (ui2<LCD_MAX_COL) && (0==ui3); ui2++) {
+      ui3 = (' ' == lcd_buf[1][ui2]) ? 1 : 0;
     }
-    arg1.valid = MENU_ITEM_NONE;
-    menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg1, MENU_ITEM_STR);
+    if (ui3) {
+      for (ui2=0; (ui2<LCD_MAX_COL) && (chars<mode_max); ui2++) {
+	bufSS[ui2] = lcd_buf[1][ui2];
+	chars++;
+      }
+    } else break;
+
+    /* store */
+    if (((mode&(~MENU_MODEMASK)) != MENU_MFOOTER) && (MENU_ITEM_NONE != arg1.valid) && (0 != chars)) {
+      bufSS[chars] = 0;
+      EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.shop_name[0]), (uint8_t *)bufSS, sizeof(uint8_t)*chars);
+      chars = 0;
+      arg1.valid = MENU_ITEM_NONE;
+    }
+
+    arg2.valid = MENU_ITEM_NONE;
+    menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg2, MENU_ITEM_STR);
   } while (chars < mode_max);
+  menu_str[chars] = 0;
 
   if (chars) {
     if ((mode&(~MENU_MODEMASK)) == MENU_MFOOTER) {
@@ -1113,7 +1174,7 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
 
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[idx]), (uint8_t *)&vptr, sizeof(uint16_t));
   si = (sale_info *)vptr;
-  if (0 == si) return (void *)FLASH_ADDR_INVALID;
+  if ((0 == si) || (0 == id)) return (void *)FLASH_ADDR_INVALID;
 
   for (ui1=0; ui1<id; vptr=(uint16_t)si) {
     uint8_t ui3[3];
@@ -1134,6 +1195,7 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
   }
 
   /* */
+  assert(vptr);
   si = (sale_info *)vptr;
   if ((si->deleted) & SALE_INFO_DELETED)
     return (void *) FLASH_ADDR_INVALID;
