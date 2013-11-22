@@ -25,13 +25,13 @@
 #include "ep_store.c"
 #include "menu.c"
 
-uint8_t inp[FLASH_SECTOR_SIZE];
+uint8_t inp[FLASH_SECTOR_SIZE], inp2[FLASH_SECTOR_SIZE];
 
 int
 main(void)
 {
   uint32_t loop;
-  uint8_t ui1;
+  uint8_t ui1, ui2;
 
   srand(time(NULL));
 
@@ -141,13 +141,23 @@ main(void)
     ui2 = rand() % HEADER_MAX_SZ;
     for (ui1=0; ui1<ui2; ui1++) {
       if (0 == (rand() % 3))
-	inp[ui1] = 'A' + (rand()%26);
+	inp2[ui1] = 'A' + (rand()%26);
       else
-	inp[ui1] = 'a' + (rand()%26);
+	inp2[ui1] = 'a' + (rand()%26);
     }
-    INIT_TEST_KEYS(inp);
+    INIT_TEST_KEYS(inp2);
     KBD_RESET_KEY;
     menu_Header(MENU_MSUPER);
+
+    /* Validate */
+    for (ui1=0; ui1<LCD_MAX_COL/2; ui1++) {
+      if (0 == inp[ui1]) break;
+      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.shop_name[0]), (uint8_t *)&ui2, sizeof(uint8_t));
+      assert(ui2 == inp[ui1]);
+      if (ui2 != inp[ui1]) {
+	printf("Header char mismatch ui2:%0d inp[ui1]:%0d\n", ui2, inp[ui1]);
+      }
+    }
   }
 
   return 0;

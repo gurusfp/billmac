@@ -236,6 +236,7 @@ void
 menu_ShowBill(uint8_t mode)
 {
   uint8_t ui2, ui3, ui4;
+  uint8_t key, key_n, key_s;
   uint16_t sale_info;
 
   if (MENU_PR_NONE == arg1.valid)
@@ -282,10 +283,10 @@ menu_ShowBill(uint8_t mode)
 
     /* retrieve this bill data, exit if invalid condition */
     for (ui4=0; ui4<SALE_INFO_SIZEOF; ui4++) {
-      bufSS[ui4] = FlashReadByte(next_record+ui4);
+      bufSS[ui4] = FlashReadByte((uint16_t)(bufSS+ui4));
     }
     for (ui3=0; ui3<(ITEM_SIZEOF*(bp->info.n_items)); ui3++, ui4++) {
-      bufSS[ui4] = FlashReadByte(next_record+ui4);
+      bufSS[ui4] = FlashReadByte((uint16_t)(bufSS+ui4));
     }
     /* populate pointers */
     for (ui3=0; ui3<(bp->info.n_items); ui3++) {
@@ -301,8 +302,8 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     menu_PrnFullBill(bp);
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    if (FlashReadByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)) != SALE_INFO_DELETED)
-	FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
+    if (FlashReadByte(sale_info+(uint16_t)(&(SALE_INFO.deleted))) != SALE_INFO_DELETED)
+      FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.deleted)), SALE_INFO_DELETED);
   }
 }
 
@@ -525,7 +526,7 @@ menu_Header(uint8_t mode)
     arg2.valid = MENU_ITEM_NONE;
     menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg2, MENU_ITEM_STR);
   } while (chars < mode_max);
-  menu_str[chars] = 0;
+  menu_str1[chars] = 0;
 
   if (chars) {
     if ((mode&(~MENU_MODEMASK)) == MENU_MFOOTER) {
