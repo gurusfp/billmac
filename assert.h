@@ -5,8 +5,14 @@
 
 #define assert(X)				\
   if (!(X)) {					\
-    printf("ASSERT ERROR " #X " " __FILE__ ":%d\n", __LINE__);	\
+    expect_else_assert(#X, __FILE__, __LINE__);	\
   }
+
+#define ERROR(msg) fprintf(stderr, msg)
+
+void assert_init();
+void add_expect_assert(char* str);
+void expect_else_assert(const char *s, const char *f, const uint32_t l);
 
 #else
 
@@ -19,4 +25,5 @@
   }
 
 #endif
+
 #endif

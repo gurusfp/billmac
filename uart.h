@@ -15,14 +15,17 @@
 
 // UART function protoypes
 void uart_init(void);           // Set UART Baud Rate to 9600 bps.
-void uart_putc(char c);         // Put Character to UART.
-char uart_getc(void);           // Get Character from UART.
-char uart_getce(void);          // Get Character from UART with Echo, Requires uart_putc().
-void uart_puts(char *s);        // Put String to UART, Requires uart_putc().
-void uart_gets(char *s);        // Get String from UART, Requires uart_getce().
-void i2s(int i,char *s);        // Convert Interger to String.
-int s2i(char *s);               // Convert String to Integer.
+void uart_putc(uint8_t c);      // Put Character to UART.
+uint8_t uart_getc(void);        // Get Character from UART.
+
+#if 0
+uint8_t uart_getce(void);       // Get Character from UART with Echo, Requires uart_putc().
+void uart_puts(uint8_t *s);     // Put String to UART, Requires uart_putc().
+void uart_gets(uint8_t *s);     // Get String from UART, Requires uart_getce().
+void i2s(int i,uint8_t *s);     // Convert Interger to String.
+int s2i(uint8_t *s);            // Convert String to Integer.
 void uart_puti(int i);          // Put Integer to UART, Requires i2s() & uart_puts().
 int uart_geti();                // Get Integer from UART, Requires uart_gets() & s2i().
+#endif
 
 #endif

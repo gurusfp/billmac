@@ -2,15 +2,15 @@
 #define BILLING_H
 
 /* Balanced to 20 bytes */
+#define ITEM_NAME_BITL         15
 typedef struct {
-  uint16_t  id_h:1;
   uint16_t  unused:2;
   uint16_t  cost:13;
-  uint8_t   id;
+  uint16_t  id:9;
   uint16_t  has_serv_tax:1;
   uint16_t  vat_sel:2;
   uint16_t  discount:13;
-  uint8_t   name[15];
+  uint8_t   name[ITEM_NAME_BITL];
 } item;
 #define  ITEM_BYTE_VALID_MASK   (1<<6)
 #define  ITEM_BYTE_DELETE_MASK  (1<<5)
@@ -43,12 +43,19 @@ typedef struct {
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
 
+typedef struct {
+  uint8_t   vat_sel:2;
+  uint8_t   has_serv_tax:1;
+  uint8_t   unused:5;
+} bill_info;
+
 /* */
 #define MAX_ITEMS_IN_BILL  (1<<SALE_INFO_ITEMS_NBITS)
 typedef struct {
   sale_info info;
   sale_item items[MAX_ITEMS_IN_BILL];
-  uint16_t addrs[MAX_ITEMS_IN_BILL];
+  bill_info bi[MAX_ITEMS_IN_BILL];
+  item      temp;
 } billing;
 
 /* constants */

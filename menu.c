@@ -125,7 +125,10 @@ uint8_t keyChars[] = {
 #define MENU_STR1_IDX_DADAT 12
 #define MENU_STR1_IDX_NAME  13
 #define MENU_STR1_IDX_REPLA 14
-#define MENU_STR1_IDX_NUM_ITEMS 15
+#define MENU_STR1_IDX_DAY   15
+#define MENU_STR1_IDX_MONTH 16
+#define MENU_STR1_IDX_YEAR  17
+#define MENU_STR1_IDX_NUM_ITEMS 18
 uint8_t menu_str1[] = 
   "Price" /* 0 */
   "Disco" /* 1 */
@@ -142,6 +145,9 @@ uint8_t menu_str1[] =
   "Delet" /*12 */
   "Name " /*13 */
   "Repla" /*14 */
+  "Day  " /*15 */
+  "Month" /*16 */
+  "Year " /*17 */
   ;
 
 /* */
@@ -169,7 +175,7 @@ menu_Init(void)
 void
 menu_Billing(uint8_t mode)
 {
-  uint8_t ui2;
+  uint8_t ui2, ui3, ui4;
   uint16_t item_addr, ui1;
 
   billing *bi = (void *) bufSS;
@@ -186,10 +192,21 @@ get_more_items:
     if ((MENU_ITEM_NONE == arg2.valid) || (FLASH_ADDR_INVALID == item_addr))
       break;
 
+    /* take the item record */
+    ui3 = (uint8_t)&(((billing *)0).temp);
+    for (ui4=0; ui4<ITEM_SIZEOF; ui3++, ui4++) {
+      bufSS[ui3] = FlashReadByte(item_addr+ui4);
+    }
+    bi->bi[ui2].vat_sel = bi->temp.vat_sel;
+    bi->bi[ui2].has_serv_tax = bi->temp.has_serv_tax;
+
+    /* The item could be invalid as well */
+    if ((0 == bi->temp.cost) && (0 == bi->temp.discount) && (0 == bi->temp.id))
+      break;
+
     /* */
     ui2 = bi->info.n_items;
     bi->items[ui2].item_id = arg2.value.integer.i16;
-    bi->addrs[ui2] = item_addr;
 
     do {
       /* # items */
@@ -235,9 +252,9 @@ get_more_items:
 void
 menu_ShowBill(uint8_t mode)
 {
-  uint8_t ui2, ui3, ui4;
+  uint8_t ui2, ui3, ui4, ui5;
   uint8_t key, key_n, key_s;
-  uint16_t sale_info;
+  uint16_t sale_info, ui1;
 
   if (MENU_PR_NONE == arg1.valid)
     return;
@@ -285,13 +302,24 @@ menu_ShowBill(uint8_t mode)
     for (ui4=0; ui4<SALE_INFO_SIZEOF; ui4++) {
       bufSS[ui4] = FlashReadByte((uint16_t)(bufSS+ui4));
     }
-    for (ui3=0; ui3<(ITEM_SIZEOF*(bp->info.n_items)); ui3++, ui4++) {
+    for (ui3=0; ui3<(SALE_SIZEOF*(bp->info.n_items)); ui3++, ui4++) {
       bufSS[ui4] = FlashReadByte((uint16_t)(bufSS+ui4));
     }
-    /* populate pointers */
-    for (ui3=0; ui3<(bp->info.n_items); ui3++) {
-      bp->addrs[ui3] = flash_item_find((uint16_t)(bp->items[ui3].item_id));
+    ui4 = (uint8_t)&(((billing *)0).temp);
+    for (ui3=0; ui3<bp->info.n_items; ui3++, ui4++) {
+      ui1 = flash_item_find(bp->items[ui3].item_id);
+      for (ui5=0; ui5<ITEM_SIZEOF; ui4++, ui5++) {
+	bufSS[ui4] = FlashReadByte(ui1+ui5);
+      }
+      bp->bp[ui3].vat_sel = bp->temp.vat_sel;
+      bp->bp[ui3].has_serv_tax = bp->temp.has_serv_tax;
     }
+
+#if 0
+    /* FIXME: The item could have been deleted as well */
+    if ((0 == bi->temp.cost) && (0 == bi->temp.discount) && (0 == bi->temp.id))
+      break;
+#endif
 
     /* FIXME: display */
 
@@ -367,7 +395,6 @@ menu_AddItem(uint8_t mode)
   it->vat_sel = vat;
   it->has_serv_tax = s_tax;
   it->id = ui1;
-  it->id_h = ui1>>8;
   it->cost = cost.value.integer.i16;
   it->discount = arg2.value.integer.i16;
 
@@ -393,7 +420,8 @@ menu_DelItem(uint8_t mode)
 void
 menu_BillReports(uint8_t mode)
 {
-  uint8_t ui3, ui4;
+  uint16_t ui1;
+  uint8_t ui3, ui4, ui5;
   billing *bp = (void *)bufSS;
 
   uint16_t start_record = flash_sale_find((uint8_t *)&(arg1.value.date), 1);
@@ -422,8 +450,14 @@ menu_BillReports(uint8_t mode)
       bufSS[ui4] = FlashReadByte(next_record+ui4);
     }
     /* populate pointers */
+    ui4 = (uint8_t)&(((billing *)0).temp);
     for (ui3=0; ui3<(bp->info.n_items); ui3++) {
-      bp->addrs[ui3] = flash_item_find((uint16_t)(bp->items[ui3].item_id));
+      ui1 = flash_item_find(bp->items[ui3].item_id);
+      for (ui5=0; ui5<ITEM_SIZEOF; ui4++, ui5++) {
+	bufSS[ui4] = FlashReadByte(ui1+ui5);
+      }
+      bp->bp[ui3].vat_sel = bp->temp.vat_sel;
+      bp->bp[ui3].has_serv_tax = bp->temp.has_serv_tax;
     }
 
     /* print after skipping deleted record */
@@ -451,6 +485,43 @@ menu_unimplemented(void)
 }
 
 void
+menu_Header(void)
+{
+  uint8_t ui2, ui3;
+
+  PRINTER_ONLINE;
+
+  /* Shop name */
+  uint16_t ui1 = &(EEPROM_DATA.shop_name);
+  for (ui2=0; ui2<SHOP_NAME_SZ; ui2++) {
+    EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
+    PRINTER_PRINT(ui3);
+    ui1++;
+  }
+
+  /* Header */
+  uint16_t ui1 = &(EEPROM_DATA.prn_header);
+  for (ui2=0; ui2<HEADER_MAX_SZ; ui2++) {
+    EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
+    PRINTER_PRINT(ui3);
+    ui1++;
+  }
+}
+
+void
+menu_Footer(void)
+{
+  uint8_t ui2, ui3;
+
+  uint16_t ui1 = &(EEPROM_DATA.prn_footer);
+  for (ui2=0; ui2<HEADER_MAX_SZ; ui2++) {
+    EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
+    PRINTER_PRINT(ui3);
+    ui1++;
+  }
+}
+
+void
 menu_PrnItemBill(billing *bp)
 {
   menu_unimplemented();
@@ -459,13 +530,44 @@ menu_PrnItemBill(billing *bp)
 void
 menu_PrnFullBill(billing *bp)
 {
-  menu_unimplemented();
+  assert(0 == bp->info.deleted);
+
+  /* Date */
+  {
+    uint8_t ymd[3];
+    ymd[0] = bp->info.date_dd;
+    ymd[1] = bp->info.date_mm;
+    ymd[2] = bp->info.date_yy;
+    printer_prn_date(ymd);
+  }
+
+  /* Item */
+  {
+    uint16_t tot_tax = 0, tot_bill = 0, serv_tax = 0, ui1;
+    uint8_t ui2, ui3, ui4, ui5;
+    ui3 = bp->info.n_items;
+    for (ui2=0; ui2<ui3; ui2++) {
+      printer_prn_int16(bp->info.item_id);
+      PRINTER_PRINT(' ');
+      for (ui1=bp->addrs[ui2], ui4=0; ui4<ITEM_NAME_BITL; ui4++, ui1++) {
+	ui5 = FlashReadByte(ui1);
+	if (0 == ui5) break;
+	PRINTER_PRINT(ui5);
+      }
+      PRINTER_PRINT(' ');
+      printer_prn_int16(bp->);
+    }
+  }
+
+  /* Total */
 }
 
 void
 menu_PrnTaxReport(billing *bp)
 {
-  menu_unimplemented();
+  /* Bill No, Date */
+  /* Item */
+  /* Total */
 }
 
 void

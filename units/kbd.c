@@ -5,14 +5,25 @@ uint8_t KbdData;
 uint8_t KbdDataAvail;
 
 uint16_t test_key_idx = -1;
-uint8_t *test_key = NULL;
+uint8_t test_key_arr_idx = 0;
+#define NUM_TEST_KEY_ARR 16
+uint8_t *test_key[NUM_TEST_KEY_ARR];
 
-#define INIT_TEST_KEYS(A) do { test_key = A; test_key_idx = 0; } while (0)
+#define INIT_TEST_KEYS(A) do { test_key[test_key_arr_idx+1] = A; test_key_arr_idx++; assert((test_key_arr_idx+1) < NUM_TEST_KEY_ARR); } while (0)
 #define KBD_SHIFT                0x80
 #define KBD_KEY_TIMES(N)   ((N-1)<<4)
 #define KBD_KEY(N)                  N
 
 uint8_t kbd_reverse_map(uint8_t);
+
+void
+KbdInit(void)
+{
+  uint8_t ui2;
+
+  for (ui2=0; ui2<NUM_TEST_KEYS; ui2++)
+    test_key[ui2] = NULL;
+}
 
 uint8_t
 kbd_reverse_map(uint8_t in)
@@ -36,6 +47,9 @@ kbd_reverse_map(uint8_t in)
   assert(0);
 }
 
+/* FIXME: We make sure that if random char is introduced, a back
+key is pressed and it is earsed. Testing is not being done when
+the last key is a 'back key' */
 void
 get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 {
@@ -43,10 +57,19 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 
   if KBD_HIT
     return;
-  if (-1 == test_key_idx) /* no data yet */
-    return;
+  if (-1 == test_key_idx) {
+    if (test_key_arr_idx) {
+      uint8_t ui2;
+      for (ui2=0; ui2<(NUM_TEST_KEY_ARR-1); ui2++) {
+	test_key[ui2+1] = ui2;
+	test_key_arr_idx = 0;
+      }
+      test_key[NUM_TEST_KEY_ARR-1] = NULL;
+    } else
+      return;
+  }
   assert(test_key_idx<=FLASH_SECTOR_SIZE);
-  if ((0 == test_key[test_key_idx]) && (0 == do_correct)) { /* completed */
+  if ((0 == test_key[0][test_key_idx]) && (0 == do_correct)) { /* completed */
     assert (-1 != test_key_idx);
     KbdData = KEY_SC_ENTER;
     KbdDataAvail = 1;
@@ -58,8 +81,8 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
     return;
   }
 
-  if ((KEY_SC_ENTER==test_key[test_key_idx]) || (KEY_SC_LEFT==test_key[test_key_idx]) || (KEY_SC_RIGHT==test_key[test_key_idx])) {
-    KbdData = test_key[test_key_idx];
+  if ((KEY_SC_ENTER==test_key[0][test_key_idx]) || (KEY_SC_LEFT==test_key[0][test_key_idx]) || (KEY_SC_RIGHT==test_key[0][test_key_idx])) {
+    KbdData = test_key[0][test_key_idx];
     KbdDataAvail = 1;
     *p_key = KbdData;
     *p_key_n = 1;
@@ -69,7 +92,7 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
     return;
   }
 
-  KbdData = kbd_reverse_map(test_key[test_key_idx]);
+  KbdData = kbd_reverse_map(test_key[0][test_key_idx]);
   KbdDataAvail = 1;
   test_key_idx++;
   if (2 <= do_correct) {

@@ -2,6 +2,7 @@
 #define PRINTER_H
 
 #define PRINTER_PAPER_STATUS        0x1B76
+#define PRINTER_TOGGLE_ONOFF        0x1B3D
 #define PRINTER_PRINT_FEED          0x1B4A
 #define PRINTER_EMPHASIZE_ONOFF     0x1B45
 #define PRINTER_INITIALIZE          0x1B40 /* -n */
@@ -13,8 +14,19 @@
 #define PRINTER_PAPER_PARTIAL_CUT   0x1B6D
 
 #define PRINTER_PRINT(c) \
-  uart_write(c)
+  uart_putc(c)
 
-extern void printer_init(void);
+#define PRINTER_COMMAND(C) \
+  uart_putc(C>>8); uart_putc(C)
+
+#define PRINTER_CMD_ARG(N) \
+  uart_putc(N)
+
+#define PRINTER_ONLINE     \
+  PRINTER_COMMAND(PRINTER_TOGGLE_ONOFF); \
+  PRINTER_CMD_ARG(1)
+
+void printer_init(void);
+void printer_prn_int16(uint16_t);
 
 #endif

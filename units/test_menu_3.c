@@ -17,6 +17,7 @@
 #include "ep_store.h"
 #include "menu.h"
 
+#include "assert.c"
 #include "crc.c"
 #include "lcd.c"
 #include "kbd.c"
@@ -31,11 +32,12 @@ int
 main(void)
 {
   uint32_t loop;
-  uint8_t ui1, ui2;
+  uint8_t ui1, ui2, ui3, ui4;
 
   srand(time(NULL));
 
   /* */
+  assert_init();
   menu_Init();
   i2cInit();
   ep_store_init();
@@ -152,13 +154,23 @@ main(void)
     /* Validate */
     for (ui1=0; ui1<LCD_MAX_COL/2; ui1++) {
       if (0 == inp[ui1]) break;
-      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.shop_name[0]), (uint8_t *)&ui2, sizeof(uint8_t));
-      assert(ui2 == inp[ui1]);
-      if (ui2 != inp[ui1]) {
-	printf("Header char mismatch ui2:%0d inp[ui1]:%0d\n", ui2, inp[ui1]);
+      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.shop_name[ui1]), (uint8_t *)&ui3, sizeof(uint8_t));
+      assert(ui3 == inp[ui1]);
+      if (ui3 != inp[ui1]) {
+	printf("Header char mismatch ui3:%0d inp[ui1]:%0d\n", ui3, inp[ui1]);
       }
     }
+    for (ui1=0; ui1<ui2; ui1++) {
+      if (0 == inp[ui1]) break;
+      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.prn_header[ui1]), (uint8_t *)&ui3, sizeof(uint8_t));
+      assert(ui3 == inp[ui1]);
+      if (ui3 != inp[ui1]) {
+	printf("Header char mismatch ui3:%0d inp[ui1]:%0d\n", ui3, inp[ui1]);
+      }
+    }
+
   }
+
 
   return 0;
 }
