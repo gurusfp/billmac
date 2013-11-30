@@ -145,9 +145,12 @@ void menu_ShowBill(uint8_t mode);
 void menu_AddItem(uint8_t mode);
 void menu_DelItem(uint8_t mode);
 void menu_BillReports(uint8_t mode);
+void menu_PrnHeader(void);
+void menu_PrnFooter(void);
 void menu_PrnItemBill(billing *bp);
 void menu_PrnAllBill(billing *bp);
 void menu_PrnTaxReport(billing *bp);
+void menu_PrnTaxReportFooter(void);
 void menu_ModVat(uint8_t mode);
 void menu_Header(uint8_t mode);
 void menu_DelAllBill(uint8_t mode);
@@ -167,6 +170,6 @@ void flash_sale_delete_month(uint8_t del_month);
 uint16_t flash_sale_find(uint8_t *dmy, uint16_t id);
 
 #define flash_item_find(id) ((id<ITEM_MAX) ? (FLASH_ITEM_START + (id * ITEM_SIZEOF)) : FLASH_ADDR_INVALID)
-uint8_t flash_item_valid(id) (id>>3)
+//uint8_t flash_item_valid(id) (id>>3)
 
 #endif

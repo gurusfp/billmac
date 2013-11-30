@@ -46,3 +46,11 @@ printer_prn_int16(uint16_t ui1)
   }
   PRINTER_PRINT('0'+(ui1&0xF));
 }
+
+void
+printer_prn_str(uint8_t *str)
+{
+  for (; 0 != str[0]; str+=1) {
+    PRINTER_PRINT(str[0]);
+  }
+}

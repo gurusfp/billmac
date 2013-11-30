@@ -27,6 +27,8 @@
   PRINTER_CMD_ARG(1)
 
 void printer_init(void);
-void printer_prn_int16(uint16_t);
+void printer_prn_date(uint8_t ymd);
+void printer_prn_uint16(uint16_t);
+void printer_prn_str(uint8_t *str);
 
 #endif

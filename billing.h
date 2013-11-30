@@ -2,7 +2,7 @@
 #define BILLING_H
 
 /* Balanced to 20 bytes */
-#define ITEM_NAME_BITL         15
+#define ITEM_NAME_BYTEL        15
 typedef struct {
   uint16_t  unused:2;
   uint16_t  cost:13;
@@ -10,7 +10,7 @@ typedef struct {
   uint16_t  has_serv_tax:1;
   uint16_t  vat_sel:2;
   uint16_t  discount:13;
-  uint8_t   name[ITEM_NAME_BITL];
+  uint8_t   name[ITEM_NAME_BYTEL];
 } item;
 #define  ITEM_BYTE_VALID_MASK   (1<<6)
 #define  ITEM_BYTE_DELETE_MASK  (1<<5)
@@ -37,7 +37,7 @@ typedef struct {
 
   uint16_t  date_dd:5;
   uint16_t  date_mm:4;
-  uint8_t   deleted;
+  uint8_t   property;
 } sale_info;
 #define SALE_INFO (*((sale_info *)0))
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
@@ -51,11 +51,15 @@ typedef struct {
 
 /* */
 #define MAX_ITEMS_IN_BILL  (1<<SALE_INFO_ITEMS_NBITS)
+#define BILLING_PRINT      (1<<0)
 typedef struct {
-  sale_info info;
-  sale_item items[MAX_ITEMS_IN_BILL];
-  bill_info bi[MAX_ITEMS_IN_BILL];
-  item      temp;
+  sale_info info;                        /*         4 */
+  sale_item items[MAX_ITEMS_IN_BILL];    /* 2*16 = 32 */
+  bill_info bi[MAX_ITEMS_IN_BILL];       /* 1*16 = 16 */
+  item      temp;                        /*        19 */
+  uint16_t  ui1, ui3, ui5, ui7;          /* 2*4  =  8 */
+  uint8_t   ui2, ui4, ui6, flags;        /*         3 */
+  uint16_t  ui9, ui11, ui13, ui15;       /* 2*4  =  8 */
 } billing;
 
 /* constants */
