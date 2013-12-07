@@ -150,7 +150,7 @@ void menu_PrnFooter(void);
 void menu_PrnItemBill(billing *bp);
 void menu_PrnAllBill(billing *bp);
 void menu_PrnTaxReport(billing *bp);
-void menu_PrnTaxReportFooter(void);
+void menu_PrnTaxReportFooter(billing *bp);
 void menu_ModVat(uint8_t mode);
 void menu_Header(uint8_t mode);
 void menu_DelAllBill(uint8_t mode);
@@ -161,6 +161,10 @@ void menu_RunDiag(uint8_t mode);
 void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
 uint8_t menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx);
 void menu_main(void);
+
+void menu_PrnItemBill(billing *bp);
+void menu_PrnFullBill(billing *bp);
+void menu_PrnTaxReport(billing *bp);
 
 void flash_item_add(uint8_t* byte_arr);
 void flash_item_delete(uint16_t id);

@@ -21,7 +21,7 @@ KbdInit(void)
 {
   uint8_t ui2;
 
-  for (ui2=0; ui2<NUM_TEST_KEYS; ui2++)
+  for (ui2=0; ui2<NUM_TEST_KEY_ARR; ui2++)
     test_key[ui2] = NULL;
 }
 
@@ -57,20 +57,20 @@ get_test_key(uint8_t* p_key, uint8_t* p_key_n, uint8_t* p_key_s)
 
   if KBD_HIT
     return;
-  if (-1 == test_key_idx) {
+  if (((uint16_t) -1) == test_key_idx) {
     if (test_key_arr_idx) {
       uint8_t ui2;
       for (ui2=0; ui2<(NUM_TEST_KEY_ARR-1); ui2++) {
-	test_key[ui2+1] = ui2;
-	test_key_arr_idx = 0;
+	test_key[ui2] = test_key[ui2+1];
       }
       test_key[NUM_TEST_KEY_ARR-1] = NULL;
+      test_key_arr_idx--;
     } else
       return;
   }
   assert(test_key_idx<=FLASH_SECTOR_SIZE);
   if ((0 == test_key[0][test_key_idx]) && (0 == do_correct)) { /* completed */
-    assert (-1 != test_key_idx);
+    assert (((uint16_t)-1) != test_key_idx);
     KbdData = KEY_SC_ENTER;
     KbdDataAvail = 1;
     *p_key = KEY_SC_ENTER;

@@ -193,7 +193,7 @@ get_more_items:
       break;
 
     /* take the item record */
-    ui3 = (uint8_t)&(((billing *)0).temp);
+    ui3 = (uint8_t)&(((billing *)0)->temp);
     for (ui4=0; ui4<ITEM_SIZEOF; ui3++, ui4++) {
       bufSS[ui3] = FlashReadByte(item_addr+ui4);
     }
@@ -305,14 +305,14 @@ menu_ShowBill(uint8_t mode)
     for (ui3=0; ui3<(SALE_SIZEOF*(bp->info.n_items)); ui3++, ui4++) {
       bufSS[ui4] = FlashReadByte((uint16_t)(bufSS+ui4));
     }
-    ui4 = (uint8_t)&(((billing *)0).temp);
+    ui4 = (uint8_t)&(((billing *)0)->temp);
     for (ui3=0; ui3<bp->info.n_items; ui3++, ui4++) {
       ui1 = flash_item_find(bp->items[ui3].item_id);
       for (ui5=0; ui5<ITEM_SIZEOF; ui4++, ui5++) {
 	bufSS[ui4] = FlashReadByte(ui1+ui5);
       }
-      bp->bp[ui3].vat_sel = bp->temp.vat_sel;
-      bp->bp[ui3].has_serv_tax = bp->temp.has_serv_tax;
+      bp->bi[ui3].vat_sel = bp->temp.vat_sel;
+      bp->bi[ui3].has_serv_tax = bp->temp.has_serv_tax;
     }
 
 #if 0
@@ -330,8 +330,15 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     menu_PrnFullBill(bp);
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    if (FlashReadByte(sale_info+(uint16_t)(&(SALE_INFO.property))) != SALE_INFO_DELETED)
-      FlashWriteByte(sale_info+(uint16_t)(&(SALE_INFO.property)), SALE_INFO_DELETED);
+    ui3 = (uint8_t)(&(SALE_INFO.property));
+    ui3 = FlashReadByte(sale_info+ui3);
+    if ( ui3 != SALE_INFO_DELETED )
+	//	FlashReadByte(
+	//	      sale_info+
+	//	      (uint16_t)
+	//	      (&(SALE_INFO.property))
+	//	      ) != SALE_INFO_DELETED)
+      FlashWriteByte(sale_info+(uint16_t)&(SALE_INFO.property), SALE_INFO_DELETED);
   }
 }
 
@@ -428,7 +435,7 @@ menu_BillReports(uint8_t mode)
 
   /* Only process valid records... */
   if (FLASH_ADDR_INVALID == start_record)
-    break;
+    return;
 
   /* */
   menu_PrnHeader();
@@ -461,13 +468,13 @@ menu_BillReports(uint8_t mode)
     }
     /* populate pointers */
     for (ui3=0; ui3<(bp->info.n_items); ui3++) {
-      ui4 = (uint8_t)&(((billing *)0).temp);
+      ui4 = (uint8_t)&(((billing *)0)->temp);
       ui1 = flash_item_find(bp->items[ui3].item_id);
       for (ui5=0; ui5<ITEM_SIZEOF; ui4++, ui5++) {
 	bufSS[ui4] = FlashReadByte(ui1+ui5);
       }
-      bp->bp[ui3].vat_sel = bp->temp.vat_sel;
-      bp->bp[ui3].has_serv_tax = bp->temp.has_serv_tax;
+      bp->bi[ui3].vat_sel = bp->temp.vat_sel;
+      bp->bi[ui3].has_serv_tax = bp->temp.has_serv_tax;
     }
 
     /* print after skipping deleted record */
@@ -492,7 +499,7 @@ menu_BillReports(uint8_t mode)
   else if ((MENU_MDAYFULL == ui3) || (MENU_MMONFULL == ui3) || (MENU_MALLFULL == ui3))
     menu_PrnFooter();
   else if ((MENU_MDAYTAX == ui3) || (MENU_MMONTAX == ui3))
-    menu_PrnTaxReportFooter();
+    menu_PrnTaxReportFooter(bp);
 }
 
 void
@@ -517,7 +524,7 @@ menu_PrnHeader(void)
   }
 
   /* Header */
-  uint16_t ui1 = &(EEPROM_DATA.prn_header);
+  ui1 = &(EEPROM_DATA.prn_header);
   for (ui2=0; ui2<HEADER_MAX_SZ; ui2++) {
     EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
     PRINTER_PRINT(ui3);
@@ -560,7 +567,7 @@ menu_PrnFullBill(billing *bp)
 
     ymd[0] = bp->info.date_dd;
     ymd[1] = bp->info.date_mm;
-    ymd[2] = bp->info.date_yy;
+    //    ymd[2] = bp->info.date_yy;
     printer_prn_date(ymd);
   }
 
@@ -571,10 +578,11 @@ menu_PrnFullBill(billing *bp)
     uint8_t ui2, ui3, ui4, ui5;
     ui3 = bp->info.n_items;
     for (ui2=0; ui2<ui3; ui2++) {
-      printer_prn_uint16(bp->info.item_id);
+      printer_prn_uint16(bp->items[ui2].item_id);
       if (bp->flags & BILLING_PRINT)
 	PRINTER_PRINT(' ');
-      for (ui1=bp->addrs[ui2], ui4=0; ui4<ITEM_NAME_BYTEL; ui4++, ui1++) {
+      ui1 = flash_item_find(bp->items[ui2].item_id);
+      for (ui4=0; ui4<ITEM_NAME_BYTEL; ui4++, ui1++) {
 	ui5 = FlashReadByte(ui1);
 	if (0 == ui5) break;
 	if (bp->flags & BILLING_PRINT)
@@ -582,7 +590,7 @@ menu_PrnFullBill(billing *bp)
       }
 
       ui1 = flash_item_find(bp->items[ui2].item_id);
-      ui5 = (uint8_t)&(((billing *)0).temp);
+      ui5 = (uint8_t)&(((billing *)0)->temp);
       for (ui4=0; ui4<ITEM_SIZEOF; ui5++, ui4++) {
 	bufSS[ui5] = FlashReadByte(ui1+ui4);
       }
@@ -601,27 +609,27 @@ menu_PrnFullBill(billing *bp)
 	printer_prn_uint16(ui1);
       /* */
       tot_bill += ui1;
-      if (bp->items[ui2].has_serv_tax) {
+      if (bp->bi[ui2].has_serv_tax) {
 	serv_tax += ui1;
       }
-      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[bp->items[ui2].vat_sel]), (uint8_t *)&ui1_2, sizeof(uint16_t));
+      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.vat[bp->bi[ui2].vat_sel]), (uint8_t *)&ui1_2, sizeof(uint16_t));
       tot_tax += ui1 * ui1_2;
     }
     /* */
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.service_tax), (uint8_t *)&ui1, sizeof(uint16_t));
     serv_tax *= ui1;
-  }
 
-  /* Total */
-  if (bp->flags & BILLING_PRINT)
-    printer_prn_uint16(tot_tax);
-  if (bp->flags & BILLING_PRINT)
-    printer_prn_uint16(serv_tax);
-  if (bp->flags & BILLING_PRINT)
-    printer_prn_uint16(tot_bill);
-  bp->ui3 = tot_bill;
-  bp->ui5 = serv_tax;
-  bp->ui7 = tot_tax;
+    /* Total */
+    if (bp->flags & BILLING_PRINT)
+      printer_prn_uint16(tot_tax);
+    if (bp->flags & BILLING_PRINT)
+      printer_prn_uint16(serv_tax);
+    if (bp->flags & BILLING_PRINT)
+      printer_prn_uint16(tot_bill);
+    bp->ui3 = tot_bill;
+    bp->ui5 = serv_tax;
+    bp->ui7 = tot_tax;
+  }
 }
 
 void
@@ -641,7 +649,7 @@ menu_PrnTaxReport(billing *bp)
 
     ymd[0] = bp->info.date_dd;
     ymd[1] = bp->info.date_mm;
-    ymd[2] = bp->info.date_yy;
+    //    ymd[2] = bp->info.date_yy;
     printer_prn_date(ymd);
   }
 
@@ -657,7 +665,7 @@ menu_PrnTaxReport(billing *bp)
 }
 
 void
-menu_PrnTaxReportFooter(void)
+menu_PrnTaxReportFooter(billing *bp)
 {
   printer_prn_uint16(bp->ui9);
   printer_prn_uint16(bp->ui11);
@@ -833,11 +841,12 @@ menu_RunDiag(uint8_t mode)
   /* Verify unused EEPROM spacesd : Write/readback
    */
   /* FIXME: randomize ui3 */
+  /*
   for (ui2=0; ui2<NUM_TESTING_BYTES; ui2++) {
     EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.testing[ui2]), &ui3, sizeof(uint8_t)*LCD_MAX_COL);
     EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.testing[ui2]), &ui3, sizeof(uint8_t)*LCD_MAX_COL);
   }
-
+  */
   /* Verify Keypad : Ask user to press a key and display it
    */
   menu_unimplemented();

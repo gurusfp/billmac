@@ -15,16 +15,16 @@ printer_init(void)
 }
 
 void
-printer_prn_date(uint8_t ymd)
+printer_prn_date(uint8_t *ymd)
 {
     PRINTER_PRINT('0' + (ymd[0]>>4));
     PRINTER_PRINT('0' + (ymd[0]&0xF));
     PRINTER_PRINT('/');
     PRINTER_PRINT('0' + (ymd[1]>>4));
     PRINTER_PRINT('0' + (ymd[1]&0xF));
-    PRINTER_PRINT('/');
-    PRINTER_PRINT('0' + (ymd[2]>>4));
-    PRINTER_PRINT('0' + (ymd[2]&0xF));
+    //    PRINTER_PRINT('/');
+    //    PRINTER_PRINT('0' + (ymd[2]>>4));
+    //    PRINTER_PRINT('0' + (ymd[2]&0xF));
 }
 
 void

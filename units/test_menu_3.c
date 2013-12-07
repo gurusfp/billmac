@@ -15,6 +15,7 @@
 #include "i2c.h"
 #include "flash.h"
 #include "ep_store.h"
+#include "printer.h"
 #include "menu.h"
 
 #include "assert.c"
@@ -24,6 +25,7 @@
 #include "i2c.c"
 #include "flash.c"
 #include "ep_store.c"
+#include "printer.c"
 #include "menu.c"
 
 uint8_t inp[FLASH_SECTOR_SIZE], inp2[FLASH_SECTOR_SIZE];
