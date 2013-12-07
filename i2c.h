@@ -12,8 +12,8 @@ void timerTimeGet(uint8_t *hm);
 #define ACK      0
 #define NACK     1
 
-#define SCL P2_0
-#define SDA P2_1
+#define SCL      P3_4
+#define SDA      P3_5
 
 #define EEPROM_CTRL_WRITE 0xA0
 #define EEPROM_CTRL_READ  0xA1

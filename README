@@ -1,0 +1,59 @@
+This README would serve as a scratchpad for ideas. In the bigger product, the
+following features would be available
+Connectivity
+############
+  1. Keyboard : PS/2 : UART
+  2. Barcode scanner : PS/2 or COM : UART
+  3. SD Card : SD : SPI
+  4. Display : SPI
+  5. Printer : Proprietery : 
+  6. Computer : USB Host/ UART
+
+
+
+8051 Based Product
+##################
+
+Pin Assignments
+###############
+
+  1 :
+  2 :
+  3 :
+  4 :
+  5 : 
+  6 : MOSI : SD Card
+  7 : MISO : SD Card
+  8 : SPICLK : SD Card
+  9 : RESET
+ 10 : UART0 (Printer)
+ 11 : UART0 (Printer)
+ 12 : UART1 (PC Connection)
+ 13 :
+ 14 : I2C (SCL)
+ 15 : I2C (SDA)
+ 16 : LCD (RS)
+ 17 : LCD (WR)
+ 18 : XTAL1
+ 19 : XTAL2
+ 20 : VSS
+ 21 : LCD (D0)
+ 22 : LCD (D1)
+ 23 : LCD (D2)
+ 24 : LCD (D3)
+ 25 : LCD (D4)
+ 26 : LCD (D5)
+ 27 : LCD (D6)
+ 28 : LCD (D7)
+ 29 :  Can't be used
+ 30 :  Can't be used  
+ 31 :  Can't be used
+ 32 : KEYPAD0
+ 33 : KEYPAD1
+ 34 : KEYPAD2
+ 35 : KEYPAD3
+ 36 : KEYPAD4
+ 37 : KEYPAD5
+ 38 : KEYPAD6
+ 39 : KEYPAD7
+ 40 : VDD
