@@ -20,7 +20,7 @@ KbdInit(void)
 }
 
 void
-KbdScan(void) __naked
+KbdScan(void)
 {
   static uint8_t gTimer0 = 0;
   uint8_t scan_code = 0, shift = 0;
@@ -71,14 +71,10 @@ KbdScan(void) __naked
     KbdDataAvail = 1;
   else if (0xFF == KbdData) { /* first time */
     KbdData = shift | scan_code;
-  } else if (/* implicit (0xFF != KbdData) && */ (scan_code == (0xF & (uint8_t)KbdData) ) {
+  } else if (/* implicit (0xFF != KbdData) && */ (scan_code == (0xF & (uint8_t)KbdData)) ) {
     /* same key pressed multiple times */
     KbdData = (KbdData & 0xF0) + 0x10;
   }
-
-  __asm
-    RET
-  __endasm;
 }
 
 uint8_t
