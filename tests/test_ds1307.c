@@ -1,4 +1,7 @@
 
+#include <p89v51rd2.h>
+#include <stdint.h>
+
 #include "lcd.h"
 #include "i2c.h"
 
