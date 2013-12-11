@@ -41,7 +41,7 @@
 #define KBD_NOT_HIT  (0x0 == KbdDataAvail)
 
 void    KbdInit(void);
-uint8_t KbdScan(void);
+void    KbdScan(void);
 uint8_t KbdIsShiftPressed(void);
 extern uint8_t KbdData;
 extern uint8_t KbdDataAvail;

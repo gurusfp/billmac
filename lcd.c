@@ -11,6 +11,10 @@ LCD_init(void)
 
   /*  Function set: 2 Line, 8-bit, 5x7 dots */
   LCD_cmd(LCD_CMD_2LINE_5x7);
+  LCD_cmd(LCD_CMD_2LINE_5x7);
+  LCD_cmd(LCD_CMD_2LINE_5x7);
+  LCD_cmd(LCD_CMD_2LINE_5x7);
+  LCD_cmd(LCD_CMD_2LINE_5x7);
 
   /* Display on, Curson blinking command */
   LCD_cmd(LCD_CMD_DISON_CURON_BLINKON);

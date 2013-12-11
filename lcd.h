@@ -16,6 +16,7 @@
 }
 
 #define LCD_PROP_NOECHO_L2  1
+#define LCD_PROP_DIRTY      (1<<1)
 
 #ifdef  UNIT_TEST
 
@@ -83,7 +84,7 @@ uint8_t _lcd_idx = 0;
     lcd_buf_p++;				\
   }						\
   lcd_buf_p = (uint8_t *)lcd_buf;		\
-  lcd_buf_prop = 0;				\
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
 }
 
 #define LCD_WR_LINE(x, y, str)  {	\
@@ -91,7 +92,7 @@ uint8_t _lcd_idx = 0;
   lcd_buf_p = lcd_buf[x];		\
   lcd_buf_p += y;			\
   for (ui1=0, ui2=0; (ui1<LCD_MAX_COL); ui1++) {	\
-    if (0 == str[ui2]) {		\
+    if (0 == ((char *)str)[ui2]) {			\
       lcd_buf_p[0] = ' ';		\
     } else {				\
       lcd_buf_p[0] = ((char *)str)[ui2];	\
@@ -99,6 +100,7 @@ uint8_t _lcd_idx = 0;
     }					\
     lcd_buf_p++;			\
   }					\
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
@@ -113,6 +115,7 @@ uint8_t _lcd_idx = 0;
   for (; ui1<LCD_MAX_COL; ui1++) {	\
     lcd_buf_p[ui1] = ' ';		\
   }					\
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
@@ -121,6 +124,7 @@ uint8_t _lcd_idx = 0;
   for (ui1=0; ui1<LCD_MAX_COL; ui1++) {	\
     lcd_buf[0][ui1] = lcd_buf[1][ui1];	\
   }					\
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
@@ -130,6 +134,7 @@ uint8_t _lcd_idx = 0;
     lcd_buf_p[0] = str[ui1];	 \
     lcd_buf_p++;		 \
   }				 \
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
@@ -139,6 +144,14 @@ uint8_t _lcd_idx = 0;
     lcd_buf_p[0] = str[ui1];	 \
     lcd_buf_p++;		 \
   }				 \
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
+  assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
+}
+
+#define LCD_PUTCH(ch) {				\
+  lcd_buf_p[0] = ch;				\
+  lcd_buf_p++;					\
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
