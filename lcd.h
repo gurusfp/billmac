@@ -119,6 +119,11 @@ uint8_t _lcd_idx = 0;
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
+#define LCD_POS(x, y) {			\
+  lcd_buf_p = lcd_buf[x];		\
+  lcd_buf_p += y;			\
+}
+
 #define LCD_SCROLL {			\
   uint8_t ui1;				\
   for (ui1=0; ui1<LCD_MAX_COL; ui1++) {	\

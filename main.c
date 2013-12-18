@@ -29,48 +29,40 @@ Timer_Init(void)
   IP  = 0;
 }
 
+uint8_t timer0_count = 0;
 void
-Timer0_isr(void) __interrupt(TF0_VECTOR) __using(1)
+Timer0_isr(void) __interrupt(TF0_VECTOR)
 {
   EA  = 0;      /* all interrupts disable */
   ET0 = 0;     /* Disable Timer0 intrs */
-  /* If Kbd is hit continously */
-//  if ( (0xFF != KBD_RC) || ((0 == KbdDataAvail) && (0xFF != KbdData)) ) {
-    KbdScan();
-//  }
+  TR0 = 0;      /* T0Run, IE */
+
+  KbdScan();
+
   TF0 = 0;     /* Clear pending interrupt */
   ET0 = 1;     /* Enable Timer0 intrs */
+  TR0 = 1;      /* T0Run, IE */
   EA  = 1;      /* all interrupts enable */
 }
 
 void
-Timer1_isr(void) __interrupt(TF1_VECTOR) __using(2)
+Timer1_isr(void) __interrupt(TF1_VECTOR)
 {
   uint8_t ui2;
 
   EA  = 0;      /* all interrupts disable */
   ET1 = 0;     /* Disable Timer1 intrs */
+  TR1 = 0;      /* T0Run, IE */
 
-  /* Enter service routine once in few interrupts */
+  /* Enter service routine only when change in data */
   if (0 == (lcd_buf_prop & LCD_PROP_DIRTY)) {
     TF1 = 0;
     ET1 = 1;
+    TR1 = 1;      /* T0Run, IE */
     EA  = 1;      /* all interrupts enable */
     return;
   }
-
-  LCD_cmd(LCD_CMD_CUR_20);
-  LCD_wrchar('L');
-  LCD_wrchar('C');
-  LCD_wrchar('D');
-  LCD_wrchar(' ');
-  LCD_wrchar('I');
-  LCD_wrchar('S');
-  LCD_wrchar('R');
-  LCD_wrchar(':');
-  LCD_wrchar('0'+  (lcd_buf_prop & LCD_PROP_DIRTY));
-  for (ui2=0; ui2<0xFF; ui2++)
-    LCD_busy;
+  lcd_buf_prop &= ~LCD_PROP_DIRTY;
 
   /* Display on LCD */
   LCD_cmd(LCD_CMD_CLRSCR);
@@ -89,18 +81,8 @@ Timer1_isr(void) __interrupt(TF1_VECTOR) __using(2)
   /* Enable next entry */
   TF1 = 0;     /* Clear pending interrupt */
   ET1 = 1;     /* Enable Timer1 intrs */
+  TR1 = 1;      /* T0Run, IE */
   EA  = 1;      /* all interrupts enable */
-  lcd_buf_prop &= ~LCD_PROP_DIRTY;
-
-  LCD_cmd(LCD_CMD_CUR_20);
-  LCD_wrchar('P');
-  LCD_wrchar('R');
-  LCD_wrchar('O');
-  LCD_wrchar('P');
-  LCD_wrchar(':');
-  LCD_wrchar('0'+  (lcd_buf_prop & LCD_PROP_DIRTY));
-  for (ui2=0; ui2<0xFF; ui2++)
-    LCD_busy;
 }
 
 #ifndef MAIN_NOMAIN
@@ -126,9 +108,9 @@ main_start:
 
     if (0xFF != KbdData) {
       LCD_cmd(LCD_CMD_CUR_20);
-      LCD_sendstring("Got Hit on ");
+      LCD_WR_LINE_N(1, 0, "Got Hit on:", 11);
       LCD_wrchar('a' + KbdData);
-      KbdData = 0;
+      KBD_RESET_KEY;
     } else {
       LCD_cmd(LCD_CMD_CUR_20);
       LCD_sendstring("No Kbd Hit");

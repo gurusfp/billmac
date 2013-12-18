@@ -33,18 +33,18 @@ main(void)
     LCD_busy;
 
   LCD_WR_LINE(0, 0, "Press any key!!!");
-  LCD_WR_LINE(1, 0, "That be displayed");
+  LCD_WR_LINE(1, 0, "That be display");
   KBD_RESET_KEY;
   while (1) {
-    KBD_GET_KEY;
     if (KBD_HIT) {
-      LCD_WR_LINE(1, 0, "Key Press : ");
-      LCD_PUTCH('0'+key);
+      KBD_GET_KEY;
+      LCD_POS(1, 0);
+      LCD_WR("Key Press : ");
+      LCD_PUTCH('a'+key);
       KBD_RESET_KEY;
-      LCD_busy;
     }
     for (ui1=0; ui1<0xFF; ui1++)
-      LCD_busy;
+      {}
   }
 
   return 0;
