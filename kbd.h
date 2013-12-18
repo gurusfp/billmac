@@ -35,7 +35,7 @@
   key_s = (KbdData&0x80);
 
 #define KBD_RESET_KEY          \
-  KbdDataAvail = 0
+  KbdDataAvail = 0 ; KbdData = 0xFF
 
 #define KBD_HIT      (0x0 != KbdDataAvail)
 #define KBD_NOT_HIT  (0x0 == KbdDataAvail)
