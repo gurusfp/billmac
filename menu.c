@@ -97,20 +97,6 @@ char    menu_prompt_str[] = MENU_PROMPTS;
 menu_arg_t arg1, arg2;
 uint8_t    menu_error;
 
-uint8_t keyChars[] = {
-  /* KCHAR_ROWS x KCHAR_COLS */
-  '0', ' ', '.', ',', ')', '+', '?', '_', ':',
-  '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
-  '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '{',
-  '3', 'g', 'h', 'i', '#', 'G', 'H', 'I', '}',
-  '4', 'j', 'k', 'l', '$', 'J', 'K', 'L', '[',
-  '5', 'm', 'n', 'o', '%', 'M', 'N', 'O', ']',
-  '6', 'p', 'q', 'r', '^', 'P', 'Q', 'R', '|',
-  '7', 's', 't', 'u', '&', 'S', 'T', 'U', '/',
-  '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
-  '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
-};
-
 #define MENU_STR1_IDX_PRICE 0
 #define MENU_STR1_IDX_DISCO 1
 #define MENU_STR1_IDX_S_TAX 2
@@ -156,7 +142,7 @@ static uint8_t MenuMode = MENU_MNORMAL;
 void
 menu_Init(void)
 {
-  MenuMode = KbdIsShiftPressed() ? MENU_MSUPER : MENU_MNORMAL;
+  MenuMode = KbdIsShiftPressed() ? MENU_MRESET : MENU_MNORMAL;
 
   if (3 == sizeof(sale_item))
     ERROR("sale item not packed into 3 bytes");

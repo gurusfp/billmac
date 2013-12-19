@@ -11,6 +11,26 @@ uint8_t KbdDataAvail;
 #error "This file should not be included in Unit tests"
 #endif
 
+#define KBD_RISE_DELAY(N) { 				\
+  uint8_t ui1;					\
+  for(ui1=0; ui1<N; ui1++)			\
+      {} \
+  }
+
+uint8_t keyChars[] = {
+  /* KCHAR_ROWS x KCHAR_COLS */
+  '0', ' ', '.', ',', ')', '+', '?', '_', ':',
+  '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
+  '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '{',
+  '3', 'g', 'h', 'i', '#', 'G', 'H', 'I', '}',
+  '4', 'j', 'k', 'l', '$', 'J', 'K', 'L', '[',
+  '5', 'm', 'n', 'o', '%', 'M', 'N', 'O', ']',
+  '6', 'p', 'q', 'r', '^', 'P', 'Q', 'R', '|',
+  '7', 's', 't', 'u', '&', 'S', 'T', 'U', '/',
+  '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
+  '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
+};
+
 void
 KbdInit(void)
 {
@@ -36,29 +56,29 @@ KbdScan(void)
 
   do {
     KBD_R2=0;
-    DELAY1(0x4);
+    KBD_RISE_DELAY(0x4);
     if (KBD_C4==0) { shift = 0x80; }
-    if (KBD_C1==0) { while(KBD_C1==0) { DELAY1(0x4); } scan_code = 5; gTimer0 = 0; break; }
-    if (KBD_C2==0) { while(KBD_C2==0) { DELAY1(0x4); } scan_code = 6; gTimer0 = 0; break; }
-    if (KBD_C3==0) { while(KBD_C3==0) { DELAY1(0x4); } scan_code = 7; gTimer0 = 0; break; }
+    if (KBD_C1==0) { while(KBD_C1==0) { KBD_RISE_DELAY(0x4); } scan_code = 5; gTimer0 = 0; break; }
+    if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 6; gTimer0 = 0; break; }
+    if (KBD_C3==0) { while(KBD_C3==0) { KBD_RISE_DELAY(0x4); } scan_code = 7; gTimer0 = 0; break; }
     KBD_R2=1;    KBD_R4=0;
-    DELAY1(0x4);
-    if (KBD_C1==0) { while(KBD_C1==0) { DELAY1(0x4); } scan_code = 12; gTimer0 = 0; break; }
-    if (KBD_C2==0) { while(KBD_C2==0) { DELAY1(0x4); } scan_code = 1; gTimer0 = 0;  break; }
-    if (KBD_C3==0) { while(KBD_C3==0) { DELAY1(0x4); } scan_code = 13; gTimer0 = 0; break; }
-    if (KBD_C4==0) { while(KBD_C4==0) { DELAY1(0x4); } scan_code = 14; gTimer0 = 0; break; }
+    KBD_RISE_DELAY(0x4);
+    if (KBD_C1==0) { while(KBD_C1==0) { KBD_RISE_DELAY(0x4); } scan_code = 12; gTimer0 = 0; break; }
+    if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 1;  gTimer0 = 0;  break; }
+    if (KBD_C3==0) { while(KBD_C3==0) { KBD_RISE_DELAY(0x4); } scan_code = 13; gTimer0 = 0; break; }
+    if (KBD_C4==0) { while(KBD_C4==0) { KBD_RISE_DELAY(0x4); } scan_code = 14; gTimer0 = 0; break; }
     KBD_R4=1;    KBD_R1=0;
-    DELAY1(0x4);
-    if (KBD_C1==0) { while(KBD_C1==0) { DELAY1(0x4); } scan_code = 2;  gTimer0 = 0; break; }
-    if (KBD_C2==0) { while(KBD_C2==0) { DELAY1(0x4); } scan_code = 3;  gTimer0 = 0; break; }
-    if (KBD_C3==0) { while(KBD_C3==0) { DELAY1(0x4); } scan_code = 4;  gTimer0 = 0; break; }
-    if (KBD_C4==0) { while(KBD_C4==0) { DELAY1(0x4); } scan_code = 11; gTimer0 = 0; break; }
+    KBD_RISE_DELAY(0x4);
+    if (KBD_C1==0) { while(KBD_C1==0) { KBD_RISE_DELAY(0x4); } scan_code = 2;  gTimer0 = 0; break; }
+    if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 3;  gTimer0 = 0; break; }
+    if (KBD_C3==0) { while(KBD_C3==0) { KBD_RISE_DELAY(0x4); } scan_code = 4;  gTimer0 = 0; break; }
+    if (KBD_C4==0) { while(KBD_C4==0) { KBD_RISE_DELAY(0x4); } scan_code = 11; gTimer0 = 0; break; }
     KBD_R1=1;    KBD_R3=0;
-    DELAY1(0x4);
-    if (KBD_C1==0) { while(KBD_C1==0) { DELAY1(0x4); } scan_code = 8;  gTimer0 = 0; break; }
-    if (KBD_C2==0) { while(KBD_C2==0) { DELAY1(0x4); } scan_code = 9;  gTimer0 = 0; break; }
-    if (KBD_C3==0) { while(KBD_C3==0) { DELAY1(0x4); } scan_code = 10; gTimer0 = 0; break; }
-    if (KBD_C4==0) { while(KBD_C4==0) { DELAY1(0x4); } scan_code = 14; gTimer0 = 0; break; }
+    KBD_RISE_DELAY(0x4);
+    if (KBD_C1==0) { while(KBD_C1==0) { KBD_RISE_DELAY(0x4); } scan_code = 8;  gTimer0 = 0; break; }
+    if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 9;  gTimer0 = 0; break; }
+    if (KBD_C3==0) { while(KBD_C3==0) { KBD_RISE_DELAY(0x4); } scan_code = 10; gTimer0 = 0; break; }
+    if (KBD_C4==0) { while(KBD_C4==0) { KBD_RISE_DELAY(0x4); } scan_code = 14; gTimer0 = 0; break; }
   } while (0);
   KBD_RC = 0xFF;
 
@@ -93,12 +113,23 @@ KbdIsShiftPressed(void)
 {
   uint8_t shift = 0;
 
-  if (0xFF != KBD_RC) {
-    KBD_R2=0;
-    DELAY1(0x4);
-    if (KBD_C4==0) { shift = 0x80; }
-  }
-
   KBD_RC = 0xFF;
+  KBD_R2=0;
+  KBD_RISE_DELAY(0x4);
+  if (KBD_C4==0) { shift = 0x80; }
+  KBD_RC = 0xFF;
+
   return shift;
 }
+
+uint8_t
+ps2code2ascii[] = {
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '`', ASCII_UNDEF, /* 0-15 */
+  ASCII_UNDEF, ASCII_ALT, ASCII_SHIFT, ASCII_UNDEF, ASCII_CTRL, ASCII_UNDEF, '1', ASCII_UNDEF, 'q', ASCII_UNDEF, 'z', 's', 'a', 'w', '2', ASCII_UNDEF, /* 16-31 */
+  ASCII_UNDEF, 'c', 'x', 'd', 'e', '4', '3', ASCII_UNDEF, ' ', ASCII_UNDEF, 'v', 'f', 't', 'r', '5', ASCII_UNDEF, /* 32-47 */
+  ASCII_UNDEF, 'n', 'b', 'h', 'g', 'y', '6', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, 'm', 'j', 'u', '7', '8', ASCII_UNDEF, /* 48-63 */
+  ASCII_UNDEF, ',', 'k', 'i', 'o', '0', '9', ASCII_UNDEF, ASCII_UNDEF, '.', '/', 'l', ';', 'p', '-', ASCII_UNDEF, /* 64-79 */
+  ASCII_UNDEF, ASCII_UNDEF, '\'', ASCII_UNDEF, '[', '=', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_SHIFT, ASCII_ENTER, ']', ASCII_UNDEF, '\\', ASCII_UNDEF, ASCII_UNDEF, /* 80-95 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_BACKSPACE, ASCII_UNDEF, ASCII_UNDEF, '1', ASCII_UNDEF, '4', '7', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 96-111 */
+  '0', '.', '2', '5', '6', '8', ASCII_UNDEF, ASCII_NUMLK, ASCII_UNDEF, '+', '3', '-', '*', '9', ASCII_PRNSCRN, ASCII_UNDEF, /* 112-127 */
+};
