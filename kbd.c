@@ -45,8 +45,8 @@ KbdScan(void)
   static uint8_t gTimer0 = 0;
   uint8_t scan_code = 0, shift = 0;
 
-//  if (0 != KbdDataAvail)
-//    return;
+  if (0 != KbdDataAvail)
+    return;
 
   /* Arrangement of keys
      R1C1 R1C2 R1C3 R1C4
@@ -93,15 +93,6 @@ KbdScan(void)
     scan_code --;
     KbdData = shift | scan_code;
   }
-//  lcd_buf_p = &(lcd_buf[1][0]);
-//  LCD_PUTCH('K');
-//  LCD_PUTCH('B');
-//  LCD_PUTCH('D');
-//  LCD_PUTCH(':');
-//  LCD_PUTCH('a'+KbdDataAvail);
-//  } else if (/* implicit (0xFF != KbdData) && */ 
-    /* same key pressed multiple times */
-//  }
 
   /* Don't let timer counter go past a value */
   if (0 ==  (gTimer0 & 0x80))

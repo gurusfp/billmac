@@ -1,6 +1,6 @@
 .PHONY:
 
-CFLAGS = -g -I. -I.. -DUNIT_TEST -DDEBUG
+CFLAGS = -g -I. -I.. -DDEBUG
 CC = gcc
 VPATH = .:..
 
@@ -9,4 +9,4 @@ TARGETS = $(subst .c, , $(SOURCES))
 
 $(TARGETS):
 
-test_% : test_%.c %.c
+test_% : test_%.c
