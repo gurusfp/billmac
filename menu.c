@@ -239,7 +239,6 @@ void
 menu_ShowBill(uint8_t mode)
 {
   uint8_t ui2, ui3, ui4, ui5;
-  uint8_t key, key_n, key_s;
   uint16_t sale_info, ui1;
 
   if (MENU_PR_NONE == arg1.valid)
@@ -259,28 +258,25 @@ menu_ShowBill(uint8_t mode)
   billing *bp = (void *)bufSS;
   do {
     /* retrieve & display bill */
-    while KBD_NOT_HIT {
-      sleep(10);
-    }
     KBD_GET_KEY;
 
-    if (KEY_SC_PRINT == key) {
+    if (ASCII_PRNSCRN == KbdData) {
       mode &= MENU_MODEMASK;
       mode |= MENU_MPRINT;
       break;
-    } else if (KEY_SC_LEFT == key) {
+    } else if ((ASCII_LEFT == KbdData) || (ASCII_UP == KbdData)) {
       arg2.value.integer.i16 --;
       sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
       if (FLASH_ADDR_INVALID == sale_info) {
 	arg2.value.integer.i16 ++;
       }
-    } else if (KEY_SC_RIGHT == key) {
+    } else if ((ASCII_RIGHT == KbdData) || (ASCII_DOWN == KbdData)) {
       arg2.value.integer.i16 ++;
       sale_info = flash_sale_find(&(arg1.value.date.date), arg2.value.integer.i16);
       if (FLASH_ADDR_INVALID == sale_info) {
 	arg2.value.integer.i16 --;
       }
-    } else if ( (KEY_SC_ENTER == key) || (KEY_SC_INVALID == key) ) {
+    } else if ( (ASCII_ENTER == KbdData) || (ASCII_UNDEF == KbdData) ) {
       break;
     }
 
@@ -859,7 +855,7 @@ menu_func_t menu_handlers[] = {
 void
 menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 {
-  uint8_t key, key_n, key_s, col_id;
+  uint8_t col_id;
   uint8_t str[LCD_MAX_COL];
 
   if (MENU_ITEM_NONE == opt) return;
@@ -878,40 +874,34 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 
   /* Get a string */
   do {
-    while KBD_NOT_HIT {
-      sleep(10);
-    }
     KBD_GET_KEY;
 
     /* Don't overflow buffer */
     if (col_id > 15) col_id = 15;
 
     switch (KbdData) {
-    case KEY_SC_LEFT:
+    case ASCII_LEFT:
       if (col_id == 0) {
 	break;
       }
       col_id--; lp--;
       lp[0] = ' ';
       break;
-    case KEY_SC_ENTER:
+    case ASCII_ENTER:
       col_id++;
       break;
-    case KEY_SC_RIGHT:
-    case KEY_SC_PRINT:
-    case KEY_SC_INVALID:
+    case ASCII_RIGHT:
+    case ASCII_PRNSCRN:
+    case ASCII_UNDEF:
       break;
     default:
-      key *= KCHAR_COLS;
-      if (key_s) key += KCHAR_SHIFT_SZ;
-      key += key_n;
-      lp[0] = keyChars[key];
+      lp[0] = KbdData;
       lp++; col_id++;
     }
-    if (KEY_SC_ENTER != key) {
+    if (ASCII_ENTER != KbdData) {
       KBD_RESET_KEY;
     }
-  } while (key != KEY_SC_ENTER);
+  } while (KbdData != ASCII_ENTER);
 
   uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
   uint8_t *lbp = (uint8_t *) lcd_buf[1];
@@ -1012,7 +1002,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 uint8_t
 menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
 {
-  uint8_t ret = 0, key, key_n, key_s;
+  uint8_t ret = 0;
 
   do {
     assert(ret < max_idx);
@@ -1021,18 +1011,13 @@ menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
     LCD_WR(": ");
     LCD_WR_N((opt_arr+(ret*MENU_PROMPT_LEN)), MENU_PROMPT_LEN);
 
-    while KBD_NOT_HIT {
-      sleep(10);
-    }
     KBD_GET_KEY;
 
-    if (KEY_SC_LEFT == KbdData) {
-      ret = (0==ret) ? max_idx-1 : ret-1;
-    } else if (KEY_SC_RIGHT == KbdData) {
+    if ((ASCII_RIGHT == KbdData) || (ASCII_DOWN == KbdData)) {
       ret = ((max_idx-1)==ret) ? 0 : ret+1;
-    }
-
-    if (KEY_SC_ENTER == KbdData) {
+    } else if ((ASCII_LEFT == KbdData) || (ASCII_UP == KbdData)) {
+      ret = (0==ret) ? max_idx-1 : ret-1;
+    } else if (ASCII_ENTER == KbdData) {
       KBD_RESET_KEY;
       return ret;
     }
@@ -1044,11 +1029,10 @@ menu_getchoice(uint8_t *quest, uint8_t *opt_arr, uint8_t max_idx)
 void
 menu_main(void)
 {
-  uint8_t menu_selected, key, key_n, key_s;
+  uint8_t menu_selected;
 
   /* initialize */
   menu_selected = 0;
-  key = 0;
 
 menu_main_start:
   assert(KBD_NOT_HIT); /* ensures kbd for user-inputs */
@@ -1063,13 +1047,10 @@ menu_main_start:
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.prn_header[0]), bufSS, sizeof(uint8_t)*LCD_MAX_COL);
   LCD_WR_LINE_N(0, 0, bufSS, LCD_MAX_COL);
   LCD_WR_LINE_N(1, 0, (menu_names+(menu_selected*MENU_NAMES_LEN)), MENU_NAMES_LEN);
-  while KBD_NOT_HIT {
-    DELAY(0xFF);
-  }
 
   KBD_GET_KEY;
 
-  if (KEY_SC_ENTER == key) {
+  if (ASCII_ENTER == KbdData) {
     KBD_RESET_KEY;
     arg1.valid = MENU_ITEM_NONE;
     LCD_CLRSCR;
@@ -1080,19 +1061,19 @@ menu_main_start:
     LCD_CLRSCR;
     menu_getopt(menu_prompt_str+((menu_prompts[(menu_selected<<1)+1])<<2), &arg2, menu_args[((menu_selected<<1)+1)]);
     (menu_handlers[menu_selected])(menu_mode[menu_selected]);
-  } else if (KEY_SC_LEFT == key) {
+  } else if ((ASCII_LEFT == KbdData) || (ASCII_UP == KbdData)) {
     menu_selected = (0 == menu_selected) ? MENU_MAX : menu_selected-1;
-  } else if (KEY_SC_RIGHT == key) {
+  } else if ((ASCII_RIGHT == KbdData) || (ASCII_UP == KbdData)) {
     menu_selected = (menu_selected >= (MENU_MAX-1)) ? 0 : menu_selected+1;
-  } else if (KEY_SC_PRINT == key) {
-    /* FIXME */
-  } else {
+  } else if (ASCII_PRNSCRN == KbdData) {
+    /* FIXME : Would this occur? */
+  } else if ((KbdData >= '0') && (KbdData <= '9')) {
     /* could be hotkey for menu */
     menu_selected *= 10;
-    menu_selected += key;
+    menu_selected += KbdData-'0';
     /* handle out of bounds */
     if (menu_selected >= MENU_MAX)
-      menu_selected = key;
+      menu_selected = KbdData-'0';
   }
 
   /* Clear Key press */

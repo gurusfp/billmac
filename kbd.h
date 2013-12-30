@@ -2,37 +2,42 @@
 #define KBD_H
 
 /* Keypad Connections */
-#define KBD_R1    P0_0
-#define KBD_R2    P0_1
-#define KBD_R3    P0_2
-#define KBD_R4    P0_3
-#define KBD_C1    P0_4
-#define KBD_C2    P0_5
-#define KBD_C3    P0_6
-#define KBD_C4    P0_7
-#define KBD_RC    P0
+#define KBD_R1           P0_0
+#define KBD_R2           P0_1
+#define KBD_R3           P0_2
+#define KBD_R4           P0_3
+#define KBD_C1           P0_4
+#define KBD_C2           P0_5
+#define KBD_C3           P0_6
+#define KBD_C4           P0_7
+#define KBD_RC           P0
+#define KBD_PS2_CLK      P3_2
+#define KBD_PS2_DATA     P3_3
 
 /* Key definitions */
-#define KEY_SC_1         1
-#define KEY_SC_2         2
-#define KEY_SC_3         3
-#define KEY_SC_4         4
-#define KEY_SC_5         5
-#define KEY_SC_6         6
-#define KEY_SC_7         7
-#define KEY_SC_8         8
-#define KEY_SC_9         9
-#define KEY_SC_0         0
-#define KEY_SC_PRINT    10
-#define KEY_SC_LEFT     11
-#define KEY_SC_RIGHT    12
-#define KEY_SC_ENTER    13
-#define KEY_SC_INVALID  15
+#define ASCII_1          '1'
+#define ASCII_2          '2'
+#define ASCII_3          '3'
+#define ASCII_4          '4'
+#define ASCII_5          '5'
+#define ASCII_6          '6'
+#define ASCII_7          '7'
+#define ASCII_8          '8'
+#define ASCII_9          '9'
+#define ASCII_0          '0'
+#define ASCII_UNDEF      0
+#define ASCII_ENTER      0xA0
+#define ASCII_BACKSPACE  0xA1
+#define ASCII_NUMLK      0xA2
+#define ASCII_PRNSCRN    0xA3
+#define ASCII_DEL        ASCII_BACKSPACE
+#define ASCII_LEFT       0xA4
+#define ASCII_RIGHT      0xA5
+#define ASCII_UP         0xA6
+#define ASCII_DOWN       0xA7
 
-#define KBD_GET_KEY          \
-  key = KbdData & 0xF;        \
-  key_n = (KbdData>>4)&0x7;   \
-  key_s = (KbdData&0x80);
+#define KBD_GET_KEY	  \
+  KbdGetCh()
 
 #define KBD_RESET_KEY          \
   KbdDataAvail = 0 ; KbdData = 0xFF
@@ -43,7 +48,10 @@
 void    KbdInit(void);
 void    KbdScan(void);
 uint8_t KbdIsShiftPressed(void);
+void    KbdGetCh(void);
 extern uint8_t KbdData;
-extern uint8_t KbdDataAvail;
+extern __sbit  KbdDataAvail;
+extern uint8_t ps2code2ascii[];
+extern uint8_t ps2code2asciiE0[];
 
 #endif

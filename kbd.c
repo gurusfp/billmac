@@ -5,13 +5,13 @@
 #include "main.h"
 
 uint8_t KbdData;
-uint8_t KbdDataAvail;
+__sbit  KbdDataAvail;
 
 #ifdef UNIT_TEST
 #error "This file should not be included in Unit tests"
 #endif
 
-#define KBD_RISE_DELAY(N) { 				\
+#define KBD_RISE_DELAY(N) {			\
   uint8_t ui1;					\
   for(ui1=0; ui1<N; ui1++)			\
       {} \
@@ -64,7 +64,7 @@ KbdScan(void)
     KBD_R2=1;    KBD_R4=0;
     KBD_RISE_DELAY(0x4);
     if (KBD_C1==0) { while(KBD_C1==0) { KBD_RISE_DELAY(0x4); } scan_code = 12; gTimer0 = 0; break; }
-    if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 1;  gTimer0 = 0;  break; }
+     if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 1;  gTimer0 = 0;  break; }
     if (KBD_C3==0) { while(KBD_C3==0) { KBD_RISE_DELAY(0x4); } scan_code = 13; gTimer0 = 0; break; }
     if (KBD_C4==0) { while(KBD_C4==0) { KBD_RISE_DELAY(0x4); } scan_code = 14; gTimer0 = 0; break; }
     KBD_R4=1;    KBD_R1=0;
@@ -83,7 +83,12 @@ KbdScan(void)
   KBD_RC = 0xFF;
 
   /* enough time elapsed after last key hit */
-  if ((gTimer0 > 0xF) && (0xFF != KbdData)) {
+  if ((gTimer0 > 0x8) && (0xFF != KbdData)) {
+    uint8_t key_sc = KbdData & 0xF;
+    key_sc *= KCHAR_COLS;
+    if (KbdData & 0x80) key_sc += KCHAR_SHIFT_SZ;
+    key_sc += (KbdData>>4) & 0x7;
+    KbdData = keyChars[key_sc];
     KbdDataAvail = 1;
   } else if (0 != gTimer0) {
     /* No key press */
@@ -99,10 +104,32 @@ KbdScan(void)
     gTimer0++;
 }
 
+void
+KbdGetCh(void)
+{
+  uint8_t ui2, ui3, ui4;
+
+  while (1) {
+    if (KbdDataAvail) {
+      return;
+    }
+    /* enter sleep state */
+    PCON = IDL;
+    __asm
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      __endasm;
+    /* Code will reach here only after wakeup */
+  }
+}
+
 uint8_t
 KbdIsShiftPressed(void)
 {
-  uint8_t shift = 0;
+  uint8_t shift = ps2ShiftHit ? 0x80 : 0;
 
   KBD_RC = 0xFF;
   KBD_R2=0;
@@ -116,11 +143,23 @@ KbdIsShiftPressed(void)
 uint8_t
 ps2code2ascii[] = {
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '`', ASCII_UNDEF, /* 0-15 */
-  ASCII_UNDEF, ASCII_ALT, ASCII_SHIFT, ASCII_UNDEF, ASCII_CTRL, ASCII_UNDEF, '1', ASCII_UNDEF, 'q', ASCII_UNDEF, 'z', 's', 'a', 'w', '2', ASCII_UNDEF, /* 16-31 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '1', ASCII_UNDEF, 'q', ASCII_UNDEF, 'z', 's', 'a', 'w', '2', ASCII_UNDEF, /* 16-31 */
   ASCII_UNDEF, 'c', 'x', 'd', 'e', '4', '3', ASCII_UNDEF, ' ', ASCII_UNDEF, 'v', 'f', 't', 'r', '5', ASCII_UNDEF, /* 32-47 */
   ASCII_UNDEF, 'n', 'b', 'h', 'g', 'y', '6', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, 'm', 'j', 'u', '7', '8', ASCII_UNDEF, /* 48-63 */
   ASCII_UNDEF, ',', 'k', 'i', 'o', '0', '9', ASCII_UNDEF, ASCII_UNDEF, '.', '/', 'l', ';', 'p', '-', ASCII_UNDEF, /* 64-79 */
-  ASCII_UNDEF, ASCII_UNDEF, '\'', ASCII_UNDEF, '[', '=', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_SHIFT, ASCII_ENTER, ']', ASCII_UNDEF, '\\', ASCII_UNDEF, ASCII_UNDEF, /* 80-95 */
+  ASCII_UNDEF, ASCII_UNDEF, '\'', ASCII_UNDEF, '[', '=', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_ENTER, ']', ASCII_UNDEF, '\\', ASCII_UNDEF, ASCII_UNDEF, /* 80-95 */
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_BACKSPACE, ASCII_UNDEF, ASCII_UNDEF, '1', ASCII_UNDEF, '4', '7', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 96-111 */
   '0', '.', '2', '5', '6', '8', ASCII_UNDEF, ASCII_NUMLK, ASCII_UNDEF, '+', '3', '-', '*', '9', ASCII_PRNSCRN, ASCII_UNDEF, /* 112-127 */
+};
+
+uint8_t
+ps2code2asciiE0[] = {
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 0-15 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 16-31 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 32-47 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 48-63 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '/', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 64-79 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_ENTER, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 80-95 */
+  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_LEFT, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 96-111 */
+  ASCII_UNDEF, ASCII_LEFT, ASCII_DOWN, ASCII_UNDEF, ASCII_RIGHT, ASCII_UP, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 112-127 */
 };
