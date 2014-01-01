@@ -18,7 +18,6 @@ int
 main(void)
 {
   uint16_t ui1;
-  uint8_t key, key_n, key_s;
 
   LCD_init();
   i2cInit();
@@ -40,7 +39,7 @@ main(void)
       KBD_GET_KEY;
       LCD_POS(1, 0);
       LCD_WR("Key Press : ");
-      LCD_PUTCH('a'+key);
+      LCD_PUTCH('a'+KbdData);
       KBD_RESET_KEY;
     }
     for (ui1=0; ui1<0xFF; ui1++)

@@ -5,43 +5,42 @@
 #define HEADER_MAX_SZ       54
 #define SHOP_NAME_SZ        16
 #define FOOTER_MAX_SZ       24
-#define MOD_HIS_SZ          35
+#define MOD_HIS_SZ          15
 #define NUM_TESTING_BYTES    3
 
 /* Available : 8K : 8192 */
 struct ep_store_layout {
   uint8_t   item_mod_his_ptr;       /*             1 */
-  item      item_mod_his[MOD_HIS_SZ]; /* 20*35=  700 */
+  item      item_mod_his[MOD_HIS_SZ]; /* 20*12=  240 */
 
   /* sale constants */
   uint16_t  sale_start;             /*             2 */
   uint16_t  sale_end;               /*             2 */
   uint16_t  vat[4];                 /*             8 */
-  uint16_t  service_tax;            /*             2 */ /* 715 */
+  uint16_t  service_tax;            /*             2 */
 
   /* item constants
      max items = 64*8 = 512
    */
-  uint8_t   item_valid[ITEM_MAX/8]; /*            64 */
   uint16_t  item_last_modified;     /*             2 */
-  uint16_t  item_count;             /*             2 */ /* 783 */
+  uint16_t  item_count;             /*             2 */ /* 319 */
 
   /* */
   uint16_t  sale_date_ptr[12*4];    /*            96 */
   uint16_t  sale_date_old_ptr[1*4]; /*             8 */
-  uint8_t   sale_date_old_ptr_month;/*             1 */ /* 888 */
+  uint8_t   sale_date_old_ptr_month;/*             1 */ /* 424 */
 
   /* User choices */
   uint8_t   print_it;               /*             1 */
 
   /* Have count of # of bill printed/ day */
   uint16_t  date_month;             /*             2 */
-  uint16_t  bill_id[EEPROM_DYNARR_MAX];  /*       16 */ /* 907 */
+  uint16_t  bill_id[EEPROM_DYNARR_MAX];  /*       16 */ /* 443 */
 
   /* banners */
   uint8_t   shop_name [SHOP_NAME_SZ];  /*         16 */
   uint8_t   prn_header[HEADER_MAX_SZ]; /*         54 */
-  uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */ /* 1001 */
+  uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */ /* 537 */
 
   /* */
   uint16_t   passwd;                /*             2 */
@@ -54,12 +53,12 @@ struct ep_store_layout {
   uint16_t  eeprom_sig[EEPROM_DYNARR_MAX]; /*     16 */
 
   /* used for testing purposes */
-  uint8_t   testing[NUM_TESTING_BYTES]; /*         3 */
-};                                  /* Total  = 1024 */
+  uint8_t   testing[NUM_TESTING_BYTES]; /*         3 */ /* 560 */
+};                                  /* Total  =  500 */
 
-#define EEPROM_DATA         (*((struct ep_store_layout *)0))
-#define EEPROM_STORE_READ   i2cReadBytes
-#define EEPROM_STORE_WRITE_NoSig i2cWriteBytes
+#define EEPROM_DATA               (*((struct ep_store_layout *)0))
+#define EEPROM_STORE_READ         i2cReadBytes
+#define EEPROM_STORE_WRITE_NoSig  i2cWriteBytes
 #define EEPROM_STORE_WRITE(A, B, C) { 					\
     i2cWriteBytes(A, B, C);						\
     EEPROM_STORE_WRITE_Sig						\

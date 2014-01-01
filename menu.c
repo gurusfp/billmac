@@ -225,7 +225,7 @@ get_more_items:
   }
 
   /* billing ... */
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.print_it), (uint8_t *)&ui2, sizeof(uint8_t));
+  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.print_it ), (uint8_t *)&ui2, sizeof(uint8_t));
   if (0 == ui2) { /* enabled */
     if (0 == menu_getchoice(menu_str1+(MENU_STR1_IDX_PRINT*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2)) {
       menu_PrnFullBill(bi);
@@ -1095,51 +1095,40 @@ void
 flash_item_add(uint8_t* byte_arr)
 {
   uint16_t item_last_modified, ui1;
-  uint8_t  ui2;
+  uint8_t  ui2, ui3;
 
   /* init */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_valid[item_last_modified/8]), (uint8_t *)&ui2, sizeof(uint8_t));
-  for (ui1=item_last_modified+1; ui1!=item_last_modified; ) {
-    if (ui1 >= ITEM_MAX)  ui1 = 0;
-    if (0 == (ui1%8))
-      EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_valid[ui1/8]), (uint8_t *)&ui2, sizeof(uint8_t));
-    if ( 0 == (ui2 & (1<<(ui1&0x7))) ) {
-      break;
-    }
-    /* incr */
-    ui1++;
-  }
-
-  /* store that we've taken the spot */
-  if ( 0 != (ui2 & (1<<(ui1&0x7))) ) {
-    assert(0); /* should not be called */
+  if (item_count >= ITEM_MAX) {
+    ERROR("Items full!!");
     return;
   }
-  item_last_modified = ui1;
-  ui2 |= 1 << (item_last_modified&0x7);
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_valid[item_last_modified/8]), (uint8_t *)&ui2, sizeof(uint8_t));
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
+
+  /* Find empty space */
+  for (ui2=0; ui2<ITEM_MAX; ui2++) {
+    for (ui3=0; ui3<ITEM_SIZEOF; ui3++) {
+      if (0 != FlashReadByte(item_last_modified+ui3))
+	break;
+    }
+    if (ui3!=ITEM_SIZEOF) break; /* Found empty space */
+    /* Next addr to check */
+    item_last_modified += ITEM_SIZEOF;
+    if (item_last_modified >= FLASH_ITEM_END)
+      item_last_modified = FLASH_ITEM_START;
+  }
+  assert(ui2<ITEM_MAX);
+
+  /* */
+  for (ui1=item_last_modified, ui2=0; ui2<ITEM_SIZEOF; ui2++, ui1++) {
+    if (FlashReadByte(ui1) != byte_arr[ui2])
+      FlashWriteByte(ui1, byte_arr[ui2]);
+  }
+
+  /* Finally update pointers accordingly */
+  EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
   ui1++;
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
-
-#if DEBUG
-  /* Check if the space is empty */
-  assert(ui1<ITEM_MAX);
-  ui1 = flash_item_find(ui1);
-  for (ui2=0; ui2<ITEM_SIZEOF; ui2++) {
-    if (0 != ui1) break;
-  }
-  assert (ui2 == ITEM_SIZEOF);
-#endif
-
-  /* */
-  for (ui2=0; ui2<ITEM_SIZEOF; ui2++, ui1++) {
-    if (0 != byte_arr[0])
-      FlashWriteByte(ui1, byte_arr[0]);
-    byte_arr++;
-  }
 }
 
 void
@@ -1149,16 +1138,19 @@ flash_item_delete(uint16_t id)
   uint8_t item_valid, ui2, ui3;
   uint8_t *block;
 
-  /* do nothing if already invalid */
-  assert(id<ITEM_MAX);
-  EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_valid[id/8]), (uint8_t *)&item_valid, sizeof(uint8_t));
-  if (0 == (item_valid & (1<<(addr%0x7))) ) {
-    return;
-  }
-
   /* input is id, compute addr */
+  assert(id<ITEM_MAX);
   addr = flash_item_find(id);
   block = (uint8_t *) (addr & ~((uint16_t)(FLASH_SECTOR_SIZE-1)));
+
+  /* Do nothing if already invalid */
+  for (ui2=0; ui2<ITEM_SIZEOF; ui2++) {
+    if (FLASH_RESET_DATA_VALUE != FlashReadByte(addr+ui2))
+      break;
+  }
+  if (ui2>=ITEM_SIZEOF) {
+    return;
+  }
 
   /* Save the item to EEPROM */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_mod_his_ptr), (uint8_t *)&item_valid, sizeof(uint8_t));
@@ -1169,7 +1161,7 @@ flash_item_delete(uint16_t id)
   }
   item_valid++;
   EEPROM_STORE_WRITE_NoSig((uint16_t)&(EEPROM_DATA.item_mod_his_ptr), (uint8_t *)&item_valid, sizeof(uint8_t));
-  EEPROM_STORE_WRITE_Sig;
+//  EEPROM_STORE_WRITE_Sig;
 
   /* Modify lookups accordingly */
   {
@@ -1231,8 +1223,6 @@ flash_item_delete(uint16_t id)
   }
 
   /* upate valid */
-  item_valid &= ~(1 << (addr%0x7));
-  EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_valid[id/8]), (uint8_t *)&item_valid, sizeof(uint8_t));
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
   ui1--;
   EEPROM_STORE_WRITE((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&ui1, sizeof(uint16_t));
