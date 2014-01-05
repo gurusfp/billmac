@@ -15,16 +15,6 @@
 #define KBD_PS2_DATA     P3_3
 
 /* Key definitions */
-#define ASCII_1          '1'
-#define ASCII_2          '2'
-#define ASCII_3          '3'
-#define ASCII_4          '4'
-#define ASCII_5          '5'
-#define ASCII_6          '6'
-#define ASCII_7          '7'
-#define ASCII_8          '8'
-#define ASCII_9          '9'
-#define ASCII_0          '0'
 #define ASCII_UNDEF      0
 #define ASCII_ENTER      0xA0
 #define ASCII_BACKSPACE  0xA1

@@ -14,4 +14,6 @@
       {} \
   }
 
+extern __sbit ps2ShiftHit, ps2CtrlHit, ps2AltHit;
+
 #endif

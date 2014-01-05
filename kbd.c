@@ -14,7 +14,7 @@ __sbit  KbdDataAvail;
 #define KBD_RISE_DELAY(N) {			\
   uint8_t ui1;					\
   for(ui1=0; ui1<N; ui1++)			\
-      {} \
+    {}						\
   }
 
 uint8_t keyChars[] = {
@@ -30,6 +30,9 @@ uint8_t keyChars[] = {
   '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
   '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
 };
+#define KCHAR_COLS      9
+#define KCHAR_ROWS     10
+#define KCHAR_SHIFT_SZ  5
 
 void
 KbdInit(void)
@@ -85,11 +88,23 @@ KbdScan(void)
   /* enough time elapsed after last key hit */
   if ((gTimer0 > 0x8) && (0xFF != KbdData)) {
     uint8_t key_sc = KbdData & 0xF;
-    key_sc *= KCHAR_COLS;
-    if (KbdData & 0x80) key_sc += KCHAR_SHIFT_SZ;
-    key_sc += (KbdData>>4) & 0x7;
-    KbdData = keyChars[key_sc];
+    key_sc--;
     KbdDataAvail = 1;
+    if (key_sc < KCHAR_ROWS) {
+      key_sc *= KCHAR_COLS;
+      if (KbdData & 0x80) key_sc += KCHAR_SHIFT_SZ;
+      key_sc += (KbdData>>4) & 0x7;
+      KbdData = keyChars[key_sc];
+    } else if (13 == key_sc) {
+      KbdData = ASCII_ENTER;
+    } else if (10 == key_sc) {
+      KbdData = ASCII_PRNSCRN;
+    } else if (11 == key_sc) {
+      KbdData = ASCII_LEFT;
+    } else if (12 == key_sc) {
+      KbdData = ASCII_RIGHT;
+    } else
+      KbdDataAvail = 0;
   } else if (0 != gTimer0) {
     /* No key press */
   } else if ((scan_code-1) == (0xF & (uint8_t)KbdData)) {
@@ -107,8 +122,6 @@ KbdScan(void)
 void
 KbdGetCh(void)
 {
-  uint8_t ui2, ui3, ui4;
-
   while (1) {
     if (KbdDataAvail) {
       return;
@@ -116,11 +129,11 @@ KbdGetCh(void)
     /* enter sleep state */
     PCON = IDL;
     __asm
-      NOP
-      NOP
-      NOP
-      NOP
-      NOP
+//      NOP
+//      NOP
+//      NOP
+//      NOP
+//      NOP
       __endasm;
     /* Code will reach here only after wakeup */
   }
@@ -129,7 +142,9 @@ KbdGetCh(void)
 uint8_t
 KbdIsShiftPressed(void)
 {
-  uint8_t shift = ps2ShiftHit ? 0x80 : 0;
+  uint8_t shift;
+
+  shift = ps2ShiftHit ? 0x80 : 0;
 
   KBD_RC = 0xFF;
   KBD_R2=0;

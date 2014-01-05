@@ -32,7 +32,7 @@ main(void)
     LCD_busy;
 
   LCD_WR_LINE(0, 0, "Press any key!!!");
-  LCD_WR_LINE(1, 0, "That be display");
+  LCD_WR_LINE(1, 0, "Shall displayed!");
   KBD_RESET_KEY;
   while (1) {
     if (KBD_HIT) {

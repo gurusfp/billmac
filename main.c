@@ -42,6 +42,8 @@ uint8_t timer0_count = 0;
 void
 Timer0_isr(void) __interrupt(TF0_VECTOR)
 {
+  uint8_t ui2;
+
   /* all interrupts disable */
   EA  = 0;  ET0 = 0;  TR0 = 0;
 
@@ -88,8 +90,6 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
 void
 Timer1_isr(void) __interrupt(TF1_VECTOR)
 {
-  uint8_t ui2;
-
   EA  = 0;      /* all interrupts disable */
   ET1 = 0;     /* Disable Timer1 intrs */
   TR1 = 0;      /* T0Run, IE */
@@ -186,11 +186,11 @@ ex0_isr(void) __interrupt(IE0_VECTOR)    /* INT0 P3_2 (Clock) */
 
   /* --------------------------------------- */
   if (drC == transL) {
-    drC = 0;
     if (3 == drC) {
       KbdData = ps2code2ascii[KeyData];
       KbdDataAvail = 1;
     }
+    drC = 0;
   }
 }
 
