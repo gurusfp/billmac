@@ -11,7 +11,7 @@
 #define MENU_FUNC(A)
 #define ARG1(A, B)
 #define ARG2(A, B)
-uint8_t *menu_names = MENU_ITEMS;
+__code const uint8_t *menu_names = MENU_ITEMS;
 #undef  ARG2
 #undef  ARG1
 #undef  MENU_FUNC
@@ -29,7 +29,7 @@ typedef void (*menu_func_t)(uint8_t mode);
 #define MENU_FUNC(A)
 #define ARG1(A, B) B,
 #define ARG2(A, B) B
-uint8_t menu_args[] = {
+__code const uint8_t menu_args[] = {
   MENU_ITEMS
 };
 #undef  ARG2
@@ -47,7 +47,7 @@ uint8_t menu_args[] = {
 #define MENU_FUNC(A)
 #define ARG1(A, B) A,
 #define ARG2(A, B) A
-uint8_t menu_prompts[] = {
+__code const uint8_t menu_prompts[] = {
   MENU_ITEMS
 };
 #undef  ARG2
@@ -65,7 +65,7 @@ uint8_t menu_prompts[] = {
 #define MENU_FUNC(A)
 #define ARG1(A, B)
 #define ARG2(A, B)
-uint8_t menu_mode[] = {
+__code const uint8_t menu_mode[] = {
   MENU_ITEMS
 };
 #undef  ARG2
@@ -83,7 +83,7 @@ uint8_t menu_mode[] = {
 #define MENU_FUNC(A) 1
 #define ARG1(A, B)
 #define ARG2(A, B)
-const uint8_t MENU_MAX = MENU_ITEMS;
+__code const uint8_t MENU_MAX = MENU_ITEMS;
 #undef  ARG2
 #undef  ARG1
 #undef  MENU_FUNC
@@ -92,7 +92,7 @@ const uint8_t MENU_MAX = MENU_ITEMS;
 #undef  ROW_JOIN
 #undef  COL_JOIN
 
-char    menu_prompt_str[] = MENU_PROMPTS;
+__code const uint8_t    menu_prompt_str[] = MENU_PROMPTS;
 
 menu_arg_t arg1, arg2;
 uint8_t    menu_error;
@@ -115,7 +115,7 @@ uint8_t    menu_error;
 #define MENU_STR1_IDX_MONTH 16
 #define MENU_STR1_IDX_YEAR  17
 #define MENU_STR1_IDX_NUM_ITEMS 18
-uint8_t menu_str1[] = 
+__code const uint8_t menu_str1[] = 
   "Price" /* 0 */
   "Disco" /* 1 */
   "S.Tax" /* 2 */
@@ -1085,7 +1085,7 @@ menu_main_start:
   goto menu_main_start;
 }
 
-uint8_t bufSS[FLASH_SECTOR_SIZE];
+__idata uint8_t bufSS[FLASH_SECTOR_SIZE];
 
 /* Item type storage : Each item is packed in 20 byte
    continous-running-storage.

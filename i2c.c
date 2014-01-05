@@ -16,7 +16,7 @@ i2cInit(void)
 
 /* (addr & 0x8000) : Addr is 8-bits */
 void
-i2cWriteBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
+i2cWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
 {
   uint8_t ui1;
   __sbit    ack;
@@ -41,8 +41,8 @@ i2cWriteBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
 
   /* */
   for (; n_bytes>0; n_bytes--) {
-    I2C_SEND_BYTE(data[0]);
-    data ++;
+    I2C_SEND_BYTE(val[0]);
+    val ++;
     I2C_GET_ACK(ack);
     assert(ACK == ack);
   }
@@ -51,7 +51,7 @@ i2cWriteBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
 }
 
 void
-i2cReadBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
+i2cReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
 {
   uint8_t ui1, ui2=0;
   __sbit     ack;
@@ -77,13 +77,13 @@ i2cReadBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes)
   for (; n_bytes>1; n_bytes--) {
     I2C_GET_BYTE(ui2);
     I2C_SEND_ACK(ACK);
-    data[0] = ui2;
-    data++;
+    val[0] = ui2;
+    val++;
   }
-  I2C_GET_BYTE(*data);
+  I2C_GET_BYTE(*val);
   I2C_SEND_ACK(NACK);
-  data[0] = ui2;
-  data++;
+  val[0] = ui2;
+  val++;
 
   I2C_STOP_BIT;
 }

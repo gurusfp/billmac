@@ -17,7 +17,7 @@ __sbit  KbdDataAvail;
     {}						\
   }
 
-uint8_t keyChars[] = {
+__code const uint8_t keyChars[] = {
   /* KCHAR_ROWS x KCHAR_COLS */
   '0', ' ', '.', ',', ')', '+', '?', '_', ':',
   '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
@@ -129,11 +129,11 @@ KbdGetCh(void)
     /* enter sleep state */
     PCON = IDL;
     __asm
-//      NOP
-//      NOP
-//      NOP
-//      NOP
-//      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
       __endasm;
     /* Code will reach here only after wakeup */
   }
@@ -155,7 +155,7 @@ KbdIsShiftPressed(void)
   return shift;
 }
 
-uint8_t
+__code const uint8_t
 ps2code2ascii[] = {
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '`', ASCII_UNDEF, /* 0-15 */
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '1', ASCII_UNDEF, 'q', ASCII_UNDEF, 'z', 's', 'a', 'w', '2', ASCII_UNDEF, /* 16-31 */
@@ -167,7 +167,7 @@ ps2code2ascii[] = {
   '0', '.', '2', '5', '6', '8', ASCII_UNDEF, ASCII_NUMLK, ASCII_UNDEF, '+', '3', '-', '*', '9', ASCII_PRNSCRN, ASCII_UNDEF, /* 112-127 */
 };
 
-uint8_t
+__code const uint8_t
 ps2code2asciiE0[] = {
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 0-15 */
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 16-31 */

@@ -17,7 +17,6 @@
 #include "menu.h"
 
 #include "assert.c"
-#include "msg.c"
 #include "crc.c"
 #include "lcd.c"
 #include "kbd.c"
@@ -145,7 +144,7 @@ main(void)
   for (ui1=0; ui1<1; ui1++) {
     add_item(all_items+ui1);
   }
-  {
+  { /* adding one more item should hit an assertion */
     item ri;
     expect_assert("Items Exceeded");
     add_item(&ri);
@@ -159,9 +158,7 @@ main(void)
   /* Now delete an item and check if the item was replaced */
   ui1 = rand() % ITEM_MAX;
   delete_item(all_items+ui1, ui1);
-  for (ui1=0; ui1<1; ui1++) {
-    compare_item(all_items+ui1, flash_item_find(ui1));
-  }
+  compare_item(all_items+ui1, flash_item_find(ui1));
 
   /* Now add item and check for validness*/
   add_item(all_items+ui1);

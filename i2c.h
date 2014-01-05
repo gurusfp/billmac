@@ -2,8 +2,8 @@
 #define I2C_H
 
 void i2cInit(void);
-void i2cWriteBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes);
-void i2cReadBytes(uint16_t addr, uint8_t *data, uint8_t n_bytes);
+void i2cWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes);
+void i2cReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes);
 void timerDateSet(uint8_t year, uint8_t month, uint8_t date);
 void timerDateGet(uint8_t *ymd);
 void timerTimeSet(uint8_t hour, uint8_t min);
@@ -36,35 +36,30 @@ void timerTimeGet(uint8_t *hm);
   NOP	     \
   __endasm
 
-#define NOP  \
-  __asm	     \
-  NOP	     \
-  __endasm
-
 #define I2C_START_BIT	 \
   SDA = 0;		 \
-  NOP;			 \
+  NOP2;			 \
   SCL = 0;		 \
-  NOP
+  NOP2
 
 #define I2C_STOP_BIT	 \
   SDA = 0;		 \
-  NOP;			 \
+  NOP2;			 \
   SCL = 1;		 \
-  NOP;			 \
+  NOP2;			 \
   SDA = 1
 
 #define I2C_GET_ACK(a)	   \
   SDA = 1;		   \
   SCL = 1;		   \
-  NOP;			   \
+  NOP2;			   \
   a = SDA;		   \
   SCL = 0
 
 #define I2C_SEND_ACK(a)	   \
   SDA = a;		   \
   SCL = 1;		   \
-  NOP;			   \
+  NOP2;			   \
   SCL = 0
 
 #define I2C_SEND_BYTE(b)    \
@@ -73,7 +68,7 @@ void timerTimeGet(uint8_t *hm);
     ui1--;		    \
     SDA = b >> ui1;	    \
     SCL=1;		    \
-    NOP;		    \
+    NOP2;		    \
     SCL=0;		    \
   } while (ui1>0)
 
@@ -84,7 +79,7 @@ void timerTimeGet(uint8_t *hm);
     SCL=1;		    \
     ui1--;		    \
     b <<= 1;		    \
-    NOP;		    \
+    NOP2;		    \
     b |= SDA;		    \
     SCL=0;		    \
   } while (ui1>0)

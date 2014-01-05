@@ -1,7 +1,7 @@
 .PHONY:
 
-CFLAGS = -g -I. -I.. -DDEBUG
-CC = gcc
+CFLAGS = -I. -I.. -DDEBUG
+CC = sdcc
 VPATH = .:..
 
 SOURCES = $(wildcard test_*.c)

@@ -14,7 +14,7 @@ add_expect_assert(char* str)
 {
   uint8_t ui1;
 
-  for (ui1=0; expect_assert[ui1]; ui1++);
+  for (ui1=0; NULL!=expect_assert[ui1]; ui1++);
 
   expect_assert[ui1] = str;
   expect_assert[ui1+1] = NULL;

@@ -153,6 +153,19 @@ uint8_t _lcd_idx = 0;
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
+#define LCD_PUT_UINT8X(ch) {			\
+  uint8_t ui2 = (ch>>4) & 0xF;			\
+  lcd_buf_p[0] = ui2;				\
+  lcd_buf_p[0] = (ui2>9) ? 'A' : '0';		\
+  lcd_buf_p++;					\
+  ui2 = ch & 0xF;				\
+  lcd_buf_p[0] = ui2;				\
+  lcd_buf_p[0] = (ui2>9) ? 'A' : '0';		\
+  lcd_buf_p++;					\
+  lcd_buf_prop |= LCD_PROP_DIRTY;		\
+  assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
+}
+
 #define LCD_PUTCH(ch) {				\
   lcd_buf_p[0] = ch;				\
   lcd_buf_p++;					\

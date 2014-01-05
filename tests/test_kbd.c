@@ -38,8 +38,8 @@ main(void)
     if (KBD_HIT) {
       KBD_GET_KEY;
       LCD_POS(1, 0);
-      LCD_WR("Key Press : ");
-      LCD_PUTCH('a'+KbdData);
+      LCD_WR("Scan Code : ");
+      LCD_PUT_UINT8X(KbdData);
       KBD_RESET_KEY;
     }
     for (ui1=0; ui1<0xFF; ui1++)
