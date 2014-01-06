@@ -1,6 +1,6 @@
 .PHONY:
 
-CFLAGS = -I. -I.. -DDEBUG
+CFLAGS = -I. -I.. -DDEBUG --stack-size 128 --stack-auto
 CC = sdcc
 VPATH = .:..
 

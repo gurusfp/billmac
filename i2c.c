@@ -15,11 +15,11 @@ i2cInit(void)
 }
 
 /* (addr & 0x8000) : Addr is 8-bits */
+__sbit static ack;
 void
 i2cWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
 {
   uint8_t ui1;
-  __sbit    ack;
 
   do {
     I2C_START_BIT;
@@ -54,7 +54,6 @@ void
 i2cReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
 {
   uint8_t ui1, ui2=0;
-  __sbit     ack;
 
   do {
     I2C_START_BIT;
@@ -92,7 +91,6 @@ void
 timerDateSet(uint8_t year, uint8_t month, uint8_t date)
 {
   uint8_t ui1;
-  __sbit  ack;
 
   do {
     I2C_START_BIT;
@@ -124,7 +122,6 @@ void
 timerDateGet(uint8_t *ymd)
 {
   uint8_t ui1, ui2;
-  __sbit ack;
 
   do {
     I2C_START_BIT;
@@ -162,7 +159,6 @@ void
 timerTimeSet(uint8_t hour, uint8_t min)
 {
   uint8_t ui1;
-  __sbit ack;
 
   do {
     I2C_START_BIT;
@@ -190,7 +186,6 @@ void
 timerTimeGet(uint8_t *hm)
 {
   uint8_t ui1, ui2;
-  __sbit ack;
 
   do {
     I2C_START_BIT;
