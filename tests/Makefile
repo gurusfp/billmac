@@ -1,4 +1,4 @@
-.PHONY:
+.PHONY: clean
 
 CFLAGS = -I. -I.. -DDEBUG
 CC = sdcc
@@ -10,3 +10,6 @@ TARGETS = $(subst .c, , $(SOURCES))
 $(TARGETS):
 
 test_% : test_%.c
+
+clean:
+	\rm -f *.[lamors]*
