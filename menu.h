@@ -132,12 +132,8 @@ typedef struct {
   MENU_MODE(MENU_MRESET) MENU_NAME("Run Diagnost") COL_JOIN MENU_FUNC(menu_RunDiag) COL_JOIN \
     ARG1(MENU_PR_ID, MENU_ITEM_NONE) COL_JOIN ARG2(MENU_PR_ID, MENU_ITEM_NONE)
 
-#define KCHAR_ROWS        10
-#define KCHAR_COLS         9
-#define KCHAR_SHIFT_SZ     5
-extern uint8_t keyChars[];
 extern uint8_t menu_error;
-extern uint8_t bufSS[];
+extern __idata uint8_t bufSS[FLASH_SECTOR_SIZE];
 
 void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
 void menu_Billing(uint8_t mode);

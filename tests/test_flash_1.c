@@ -1,8 +1,26 @@
+#include<stdint.h>
+#include<p89v51rd2.h>
 
-#define assert(...)
+#include "assert.h"
+#include "crc.h"
+#include "lcd.h"
+#include "kbd.h"
+#include "billing.h"
+#include "i2c.h"
+#include "flash.h"
+#include "ep_store.h"
+#include "menu.h"
 
+#include "crc.c"
 #include "lcd.c"
+#include "kbd.c"
+#include "i2c.c"
 #include "flash.c"
+#include "ep_store.c"
+#include "menu.c"
+
+#define MAIN_NOMAIN
+#include "main.c"
 
 #define DELAY(N) { 				\
   uint8_t ui1, ui2;				\
@@ -33,9 +51,7 @@ start_main:
   DELAY(100);
   LCD_WR_LINE(0, 0, "Hello World 1");
   DELAY(100);
-  LCD_Display();
 
-#if 0
   FlashWriteByte (0xF000, 0x1);
   FlashWriteByte (0xF001, 0x2);
   FlashWriteByte (0xF002, 0x3);
@@ -57,7 +73,6 @@ start_main:
   LCD_WR("Hello World ");
   LCD_wrchar('0'+ui1);
   DELAY(10);
-#endif
 
   goto start_main;
 }

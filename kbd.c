@@ -30,9 +30,9 @@ __code const uint8_t keyChars[] = {
   '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
   '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
 };
-#define KCHAR_COLS      9
-#define KCHAR_ROWS     10
-#define KCHAR_SHIFT_SZ  5
+#define KCHAR_ROWS        10
+#define KCHAR_COLS         9
+#define KCHAR_SHIFT_SZ     5
 
 void
 KbdInit(void)

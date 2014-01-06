@@ -79,7 +79,7 @@ uint8_t _lcd_idx = 0;
 #define LCD_CLRSCR {				\
   uint8_t ui1;				\
   lcd_buf_p = (uint8_t *)lcd_buf;		\
-  for (ui1=0; ui1<(LCD_MAX_COL<<1); ui1++) {	\
+  for (ui1=0; ui1<(LCD_MAX_COL*LCD_MAX_ROW); ui1++) {	\
     lcd_buf_p[0] = ' ';				\
     lcd_buf_p++;				\
   }						\

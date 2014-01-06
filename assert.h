@@ -16,13 +16,19 @@ void expect_else_assert(const char *s, const char *f, const uint32_t l);
 
 #else
 
+#if 0
 #define assert(X)			       \
   if (!(X)) {				       \
-    LCD_WR_LINE(1, 0, __FILE__, 12);	       \
+    LCD_WR_LINE_N(1, 0, __FILE__, 12);	       \
     LCD_wrchar('0' + (((__LINE__/10)/10)%10)); \
     LCD_wrchar('0' + ((__LINE__/10)%10));      \
     LCD_wrchar('0' + (__LINE__%10));	       \
   }
+#else
+#define  assert(X)
+#endif
+
+#define ERROR(msg) { }
 
 #endif
 

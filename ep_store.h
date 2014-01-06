@@ -56,7 +56,7 @@ struct ep_store_layout {
   uint8_t   testing[NUM_TESTING_BYTES]; /*         3 */ /* 560 */
 };                                  /* Total  =  500 */
 
-#define EEPROM_DATA               (*((struct ep_store_layout *)0))
+#define EEPROM_DATA               (*((__code struct ep_store_layout *)0))
 #define EEPROM_STORE_READ         i2cReadBytes
 #define EEPROM_STORE_WRITE_NoSig  i2cWriteBytes
 #define EEPROM_STORE_WRITE(A, B, C) { 					\

@@ -94,7 +94,8 @@ __code const uint8_t MENU_MAX = MENU_ITEMS;
 
 __code const uint8_t    menu_prompt_str[] = MENU_PROMPTS;
 
-menu_arg_t arg1, arg2;
+__idata menu_arg_t arg1, arg2;
+__idata uint8_t bufSS[FLASH_SECTOR_SIZE];
 uint8_t    menu_error;
 
 #define MENU_STR1_IDX_PRICE 0
@@ -161,8 +162,8 @@ menu_Init(void)
 void
 menu_Billing(uint8_t mode)
 {
-  uint8_t ui2, ui3, ui4;
-  uint16_t item_addr, ui1;
+  uint8_t ui2, ui3, ui4, ui5;
+  uint16_t item_addr;
 
   billing *bi = (void *) bufSS;
   for (ui2=0; ui2<sizeof(billing); ui2++) {
@@ -173,7 +174,7 @@ menu_Billing(uint8_t mode)
   menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg2, MENU_ITEM_ID);
 
 get_more_items:
-  for (; bi->info.n_items < MAX_ITEMS_IN_BILL; bi->info.n_items++) {
+  for (ui5=0; ui5 < MAX_ITEMS_IN_BILL; ui5++) {
     item_addr = flash_item_find(arg2.value.integer.i16);
     if ((MENU_ITEM_NONE == arg2.valid) || (FLASH_ADDR_INVALID == item_addr))
       break;
@@ -203,6 +204,7 @@ get_more_items:
     /* */
     bi->items[ui2].num_sale  = (uint8_t) arg2.value.integer.i16;
   }
+  bi->info.n_items = ui5;
 
   /* */
   if (0 != menu_getchoice(menu_str1+(MENU_STR1_IDX_FINAL*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2))
@@ -1084,8 +1086,6 @@ menu_main_start:
      exit */
   goto menu_main_start;
 }
-
-__idata uint8_t bufSS[FLASH_SECTOR_SIZE];
 
 /* Item type storage : Each item is packed in 20 byte
    continous-running-storage.

@@ -12,4 +12,4 @@ $(TARGETS):
 test_% : test_%.c
 
 clean:
-	\rm -f *.[lamors]*
+	\rm -f *.[lamors]* *.cdb

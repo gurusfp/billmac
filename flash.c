@@ -10,7 +10,6 @@
 void
 FlashInit()
 {
-  flash_item_renew_sector();
 }
 
 /* Write a byte in to the flash using the IAP routines of the p89v51rd2. */

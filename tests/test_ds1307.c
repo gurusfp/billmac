@@ -18,7 +18,6 @@ int
 main(void)
 {
   uint16_t ui1;
-  uint8_t key, key_n, key_s;
   uint8_t ymd[3];
 
   LCD_init();

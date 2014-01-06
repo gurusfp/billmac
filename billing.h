@@ -39,7 +39,7 @@ typedef struct {
   uint16_t  date_mm:4;
   uint8_t   property;
 } sale_info;
-#define SALE_INFO                   (*((sale_info *)0))
+#define SALE_INFO                   (*((__code sale_info *)0))
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
 
