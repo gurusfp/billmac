@@ -30,9 +30,6 @@ __code const uint8_t keyChars[] = {
   '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
   '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
 };
-#define KCHAR_ROWS        10
-#define KCHAR_COLS         9
-#define KCHAR_SHIFT_SZ     5
 
 void
 KbdInit(void)
@@ -60,7 +57,7 @@ KbdScan(void)
   do {
     KBD_R2=0;
     KBD_RISE_DELAY(0x4);
-    if (KBD_C4==0) { shift = 0x80; }
+    if (KBD_C4==0) { shift = KBD_SHIFT; }
     if (KBD_C1==0) { while(KBD_C1==0) { KBD_RISE_DELAY(0x4); } scan_code = 5; gTimer0 = 0; break; }
     if (KBD_C2==0) { while(KBD_C2==0) { KBD_RISE_DELAY(0x4); } scan_code = 6; gTimer0 = 0; break; }
     if (KBD_C3==0) { while(KBD_C3==0) { KBD_RISE_DELAY(0x4); } scan_code = 7; gTimer0 = 0; break; }
@@ -92,7 +89,7 @@ KbdScan(void)
     KbdDataAvail = 1;
     if (key_sc < KCHAR_ROWS) {
       key_sc *= KCHAR_COLS;
-      if (KbdData & 0x80) key_sc += KCHAR_SHIFT_SZ;
+      if (KbdData & KBD_SHIFT) key_sc += KCHAR_SHIFT_SZ;
       key_sc += (KbdData>>4) & 0x7;
       KbdData = keyChars[key_sc];
     } else if (13 == key_sc) {
@@ -144,12 +141,12 @@ KbdIsShiftPressed(void)
 {
   uint8_t shift;
 
-  shift = ps2ShiftHit ? 0x80 : 0;
+  shift = ps2ShiftHit ? KBD_SHIFT : 0;
 
   KBD_RC = 0xFF;
   KBD_R2=0;
   KBD_RISE_DELAY(0x4);
-  if (KBD_C4==0) { shift = 0x80; }
+  if (KBD_C4==0) { shift = KBD_SHIFT; }
   KBD_RC = 0xFF;
 
   return shift;

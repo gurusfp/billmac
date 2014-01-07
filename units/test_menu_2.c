@@ -2,13 +2,17 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <assert.h>
 #include <stdlib.h>
 
-#include "billing.h"
+#define __code
+#define __idata
+#define __pdata
+#define __sbit  uint8_t
 
 #define ERROR(msg) fprintf(stderr, msg)
 
+#include "assert.h"
+#include "billing.h"
 #include "crc.h"
 #include "lcd.h"
 #include "kbd.h"

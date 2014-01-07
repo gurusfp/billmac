@@ -1,13 +1,11 @@
 .PHONY:
 
-CFLAGS = -g -I. -I.. -DUNIT_TEST -DDEBUG -fpack-struct $(CMDLINE_CFLAGS)
+CFLAGS = -g -I. -I.. -DUNIT_TEST -DDEBUG -fpack-struct -Wno-pointer-to-int-cast $(CMDLINE_CFLAGS)
 CC = gcc
 VPATH = .:..
 
 SOURCES = $(wildcard test_*.c)
 TARGETS = $(subst .c, , $(SOURCES))
-
-CFLAGS = -I. -I.. -Wno-pointer-to-int-cast
 
 $(TARGETS):
 

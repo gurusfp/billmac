@@ -33,8 +33,9 @@ uint8_t _lcd_idx = 0;
 # define LCD_CMD_2LINE_5x7
 # define LCD_ACT_LINE2         assert(0)
 
-# define LCD_cmd(var)    \
-  var
+# define LCD_cmd(var)   LCD_wrchar(var)
+
+# define LCD_idle_drive
 
 # define LCD_wrchar(var) \
   putchar(var)

@@ -116,7 +116,7 @@ uint8_t    menu_error;
 #define MENU_STR1_IDX_MONTH 16
 #define MENU_STR1_IDX_YEAR  17
 #define MENU_STR1_IDX_NUM_ITEMS 18
-__code const uint8_t menu_str1[] = 
+__code uint8_t menu_str1[] = 
   "Price" /* 0 */
   "Disco" /* 1 */
   "S.Tax" /* 2 */

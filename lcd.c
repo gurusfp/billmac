@@ -32,34 +32,6 @@ uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
 uint8_t lcd_buf_prop;
 uint8_t *lcd_buf_p;
 
-void
-LCD_refresh(void)
-{
-  uint8_t ui1;
-  uint8_t *buf_p = (uint8_t *)lcd_buf;
-
-#ifdef UNIT_TEST
-  printf("----------\n");
-#endif
-  /* Consume the new string */
-  LCD_cmd(LCD_CMD_CUR_10);
-  for (ui1=0; ui1<LCD_MAX_COL; ui1++) {
-    LCD_wrchar(buf_p[0]);
-    buf_p ++;
-  }
-#ifdef UNIT_TEST
-  putchar('\n');
-#endif
-  LCD_cmd(LCD_CMD_CUR_20);
-  for (ui1=0; ui1<LCD_MAX_COL; ui1++) {
-    LCD_wrchar((lcd_buf_prop & LCD_PROP_NOECHO_L2) ? '*' : buf_p[0]);
-    buf_p ++;
-  }
-#ifdef UNIT_TEST
-  putchar('\n');
-#endif
-}
-
 #ifdef LCD_MAIN
 
 void main(void)

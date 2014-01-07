@@ -35,6 +35,11 @@
 #define KBD_HIT      (0x0 != KbdDataAvail)
 #define KBD_NOT_HIT  (0x0 == KbdDataAvail)
 
+#define KCHAR_ROWS        10
+#define KCHAR_COLS         9
+#define KCHAR_SHIFT_SZ     5
+#define KBD_SHIFT       0x80
+
 void    KbdInit(void);
 void    KbdScan(void);
 uint8_t KbdIsShiftPressed(void);
