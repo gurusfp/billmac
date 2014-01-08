@@ -169,6 +169,8 @@ void flash_sale_add(uint8_t *sale);
 void flash_sale_delete_month(uint8_t del_month);
 uint16_t flash_sale_find(uint8_t *dmy, uint16_t id);
 
+void flash_sale_free_old_sector(void);
+
 #define flash_item_find(id) ((id<ITEM_MAX) ? (FLASH_ITEM_START + (id * ITEM_SIZEOF)) : FLASH_ADDR_INVALID)
 //uint8_t flash_item_valid(id) (id>>3)
 

@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
@@ -19,14 +20,17 @@
 #include "i2c.h"
 #include "flash.h"
 #include "ep_store.h"
+#include "printer.h"
 #include "menu.h"
 
+#include "assert.c"
 #include "crc.c"
 #include "lcd.c"
 #include "kbd.c"
 #include "i2c.c"
 #include "flash.c"
 #include "ep_store.c"
+#include "printer.c"
 #include "menu.c"
 
 uint8_t inp[FLASH_SECTOR_SIZE];
@@ -211,11 +215,11 @@ main(void)
     ui2 = 0; ui3 = 0;
     while (ui1 != ui2) {
       if (rand()%2) {
-	inp[ui3] = KEY_SC_LEFT;
+	inp[ui3] = ASCII_LEFT;
 	ui3++;
 	ui2 = (0==ui2) ? MENU_STR1_IDX_NUM_ITEMS-1 : ui2-1;
       } else {
-	inp[ui3] = KEY_SC_RIGHT;
+	inp[ui3] = ASCII_RIGHT;
 	ui3++;
 	ui2 = (MENU_STR1_IDX_NUM_ITEMS-1==ui2) ? 0 : ui2+1;
       }

@@ -48,5 +48,6 @@ extern uint8_t KbdData;
 extern __sbit  KbdDataAvail;
 __code const extern uint8_t ps2code2ascii[];
 __code const extern uint8_t ps2code2asciiE0[];
+__code const extern uint8_t keyChars[];
 
 #endif

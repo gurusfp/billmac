@@ -1,7 +1,16 @@
 #include <stdint.h>
 #include <p89v51rd2.h>
 
+#include "assert.h"
+#include "billing.h"
+#include "crc.h"
+#include "ep_store.h"
+#include "i2c.h"
 #include "lcd.h"
+#include "flash.h"
+#include "kbd.h"
+#include "main.h"
+#include "printer.h"
 #include "menu.h"
 
 #define ROW_JOIN
@@ -92,7 +101,7 @@ __code const uint8_t MENU_MAX = MENU_ITEMS;
 #undef  ROW_JOIN
 #undef  COL_JOIN
 
-__code const uint8_t    menu_prompt_str[] = MENU_PROMPTS;
+__code uint8_t    menu_prompt_str[] = MENU_PROMPTS;
 
 __idata menu_arg_t arg1, arg2;
 __idata uint8_t bufSS[FLASH_SECTOR_SIZE];
@@ -242,6 +251,7 @@ menu_ShowBill(uint8_t mode)
 {
   uint8_t ui2, ui3, ui4, ui5;
   uint16_t sale_info, ui1;
+  billing *bp;
 
   if (MENU_PR_NONE == arg1.valid)
     return;
@@ -257,7 +267,7 @@ menu_ShowBill(uint8_t mode)
   }
 
   /* Keep reacting to user inputs */
-  billing *bp = (void *)bufSS;
+  bp = (billing *)bufSS;
   do {
     /* retrieve & display bill */
     KBD_GET_KEY;
@@ -314,7 +324,7 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     menu_PrnFullBill(bp);
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    ui3 = (uint8_t)(&(SALE_INFO.property));
+    //FIXME: (not compiling)    ui3 = (uint16_t)&(SALE_INFO.property);
     ui3 = FlashReadByte(sale_info+ui3);
     if ( ui3 != SALE_INFO_DELETED )
 	//	FlashReadByte(
@@ -322,7 +332,7 @@ menu_ShowBill(uint8_t mode)
 	//	      (uint16_t)
 	//	      (&(SALE_INFO.property))
 	//	      ) != SALE_INFO_DELETED)
-      FlashWriteByte(sale_info+(uint16_t)&(SALE_INFO.property), SALE_INFO_DELETED);
+      FlashWriteByte(sale_info+(uint16_t)&(SALE_INFO_P->property), SALE_INFO_DELETED);
   }
 }
 
@@ -336,6 +346,8 @@ menu_AddItem(uint8_t mode)
   uint8_t choice[MENU_PROMPT_LEN*4], ui2, ui3, ui4, vat;
   uint16_t ui1, item_count;
   menu_arg_t cost;
+  item *it;
+  uint8_t s_tax;
 
   /* Check if space is available */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_count), (uint8_t *)&item_count, sizeof(uint16_t));
@@ -345,7 +357,7 @@ menu_AddItem(uint8_t mode)
   }
 
   /* save name */
-  item *it = (void *) bufSS;
+  it = (void *) bufSS;
   for (ui4=0; ui4<ITEM_SIZEOF; ui4++) {
     bufSS[ui4] = 0;
   }
@@ -370,7 +382,6 @@ menu_AddItem(uint8_t mode)
   vat = menu_getchoice(menu_str1+(MENU_STR1_IDX_VAT*MENU_PROMPT_LEN), choice, 4);
 
   /* serv-tax */
-  uint8_t s_tax;
   s_tax = menu_getchoice(menu_str1+(MENU_STR1_IDX_S_TAX*MENU_PROMPT_LEN), menu_str1+(MENU_STR1_IDX_YesNo*MENU_PROMPT_LEN), 2) ? 0 : 1;
 
   /* Confirm */
@@ -756,6 +767,7 @@ menu_SetPasswd(uint8_t mode)
   CRC16_Init();
   for (ui1=0; ui1<LCD_MAX_COL; ui1++) {
     ui2 = lcd_buf[1][ui1];
+    /* check isprintable? */
     for (ui3=0; ui3<(KCHAR_COLS*KCHAR_ROWS); ui3++) {
       if (ui2 == keyChars[ui3])
 	break;
@@ -1099,10 +1111,6 @@ flash_item_add(uint8_t* byte_arr)
 
   /* init */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
-  if (item_count >= ITEM_MAX) {
-    ERROR("Items full!!");
-    return;
-  }
 
   /* Find empty space */
   for (ui2=0; ui2<ITEM_MAX; ui2++) {
@@ -1334,7 +1342,7 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
 
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.sale_date_ptr[idx]), (uint8_t *)&vptr, sizeof(uint16_t));
   si = (sale_info *)vptr;
-  if ((0 == si) || (0 == id)) return (void *)FLASH_ADDR_INVALID;
+  if ((0 == si) || (0 == id)) return (uint16_t)FLASH_ADDR_INVALID;
 
   for (ui1=0; ui1<id; vptr=(uint16_t)si) {
     uint8_t ui3[3];
