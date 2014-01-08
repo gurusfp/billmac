@@ -29,7 +29,7 @@ typedef struct {
 #define  SALE_INFO_ITEMS_NBITS     4
 #define  SALE_INFO_DELETED      0x80
 #define  SALE_INFO_MODIFIED     0x40
-typedef struct {
+typedef struct _sale_info {
   uint16_t  n_items:SALE_INFO_ITEMS_NBITS;
 
   uint16_t  time_hh:5;
@@ -39,8 +39,8 @@ typedef struct {
   uint16_t  date_mm:4;
   uint8_t   property;
 } sale_info;
-#define SALE_INFO_P             ((struct sale_info *)0)
-#define SALE_INFO               (*((struct sale_info *)0))
+//#define SALE_INFO_P             ((struct sale_info *)0)
+#define SALE_INFO               (*((sale_info *)0))
 //#define SALE_INFO                   ((__code sale_info *)0x10)
 #define SALE_INFO_BYTE_NITEM_MASK   0xF0
 #define SALE_INFO_BYTE_NITEM_SHIFT  4

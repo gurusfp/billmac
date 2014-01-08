@@ -324,15 +324,10 @@ menu_ShowBill(uint8_t mode)
   if ((mode&(~MENU_MODEMASK)) == MENU_MPRINT) {
     menu_PrnFullBill(bp);
   } else if ((mode&(~MENU_MODEMASK)) == MENU_MDELETE) {
-    //FIXME: (not compiling)    ui3 = (uint16_t)&(SALE_INFO.property);
-    ui3 = FlashReadByte(sale_info+ui3);
-    if ( ui3 != SALE_INFO_DELETED )
-	//	FlashReadByte(
-	//	      sale_info+
-	//	      (uint16_t)
-	//	      (&(SALE_INFO.property))
-	//	      ) != SALE_INFO_DELETED)
-      FlashWriteByte(sale_info+(uint16_t)&(SALE_INFO_P->property), SALE_INFO_DELETED);
+    ui3 = FlashReadByte(sale_info+offsetof(struct _sale_info, property));
+    if ( FLASH_RESET_DATA_VALUE == ui3 ) {
+      FlashWriteByte(sale_info+offsetof(struct _sale_info, property), SALE_INFO_DELETED);
+    }
   }
 }
 
@@ -542,6 +537,12 @@ menu_PrnFooter(void)
 
 void
 menu_PrnItemBill(billing *bp)
+{
+  menu_unimplemented();
+}
+
+void
+menu_PrnItemBillFooter(void)
 {
   menu_unimplemented();
 }

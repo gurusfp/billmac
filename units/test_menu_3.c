@@ -5,14 +5,20 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "billing.h"
+#define __code
+#define __idata
+#define __pdata
+#define __sbit  uint8_t
 
 #define ERROR(msg) fprintf(stderr, msg)
 
+#include "assert.h"
+#include "billing.h"
 #include "crc.h"
 #include "lcd.h"
 #include "kbd.h"
 #include "i2c.h"
+#include "uart.h"
 #include "flash.h"
 #include "ep_store.h"
 #include "printer.h"
@@ -23,6 +29,7 @@
 #include "lcd.c"
 #include "kbd.c"
 #include "i2c.c"
+#include "uart.c"
 #include "flash.c"
 #include "ep_store.c"
 #include "printer.c"
@@ -111,12 +118,12 @@ main(void)
     if (0 != ui2) {
       ui2 = sel + 4*(rand()%8);
       for (ui1=0; ui1<ui2; ui1++)
-	inp[ui1] = KEY_SC_RIGHT;
+	inp[ui1] = ASCII_RIGHT;
       inp[ui1] = 0;
     } else {
       ui2 = (4-sel) + 4*(rand()%8);
       for (ui1=0; ui1<ui2; ui1++)
-	inp[ui1] = KEY_SC_LEFT;
+	inp[ui1] = ASCII_LEFT;
       inp[ui1] = 0;
     }
 

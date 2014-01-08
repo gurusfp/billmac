@@ -5,15 +5,23 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "billing.h"
+#define __code
+#define __idata
+#define __pdata
+#define __sbit  uint8_t
+
+#define ERROR(msg) fprintf(stderr, msg)
 
 #include "assert.h"
+#include "billing.h"
 #include "crc.h"
 #include "lcd.h"
 #include "kbd.h"
 #include "i2c.h"
+#include "uart.h"
 #include "flash.h"
 #include "ep_store.h"
+#include "printer.h"
 #include "menu.h"
 
 #include "assert.c"
@@ -21,8 +29,10 @@
 #include "lcd.c"
 #include "kbd.c"
 #include "i2c.c"
+#include "uart.c"
 #include "flash.c"
 #include "ep_store.c"
+#include "printer.c"
 #include "menu.c"
 
 uint8_t inp[NUM_TEST_KEY_ARR][FLASH_SECTOR_SIZE];
@@ -85,8 +95,10 @@ add_item(item *ri1)
 void
 compare_item(item *ri, uint16_t flash_item)
 {
+  uint16_t ui1;
   item rif;
   char *bufTT = (void *) &(rif);
+
   for (ui1=0; ui1<ITEM_SIZEOF; ui1++)
     bufTT[ui1] = FlashReadByte(flash_item+ui1);
 

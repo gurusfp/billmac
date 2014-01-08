@@ -26,7 +26,7 @@
 void
 uart_init(void)
 {
-_asm
+  __asm
   anl     PCON,#0x7F      // Clear SMOD of PCON, No Double Baud Rate.
   anl     TMOD,#0xAF      // Clear C/T, M0 for Timer1 of TMOD.
   orl     TMOD,#0x20      // Set M1 for Timer1 of TMOD.
@@ -39,7 +39,7 @@ _asm
   setb    TR1             // Set TR1 of TCON to Start Timer1.
   setb    TI              // Set TI of SCON to Get Ready to Send.
   clr     RI              // Clear RI of SCON to Get Ready to Receive.
-_endasm;
+  __endasm;
 }
 
 void

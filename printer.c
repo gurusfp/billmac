@@ -28,7 +28,7 @@ printer_prn_date(uint8_t *ymd)
 }
 
 void
-printer_prn_int16(uint16_t ui1)
+printer_prn_uint16(uint16_t ui1)
 {
   uint8_t ui2;
 

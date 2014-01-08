@@ -13,6 +13,21 @@ uint8_t *test_key[NUM_TEST_KEY_ARR];
 #define KBD_KEY_TIMES(N)   ((N-1)<<4)
 #define KBD_KEY(N)                  N
 
+/* This should be kept in sync with original kbd.c */
+__code const uint8_t keyChars[] = {
+  /* KCHAR_ROWS x KCHAR_COLS */
+  '0', ' ', '.', ',', ')', '+', '?', '_', ':',
+  '1', 'a', 'b', 'c', '!', 'A', 'B', 'C', '~',
+  '2', 'd', 'e', 'f', '@', 'D', 'E', 'F', '{',
+  '3', 'g', 'h', 'i', '#', 'G', 'H', 'I', '}',
+  '4', 'j', 'k', 'l', '$', 'J', 'K', 'L', '[',
+  '5', 'm', 'n', 'o', '%', 'M', 'N', 'O', ']',
+  '6', 'p', 'q', 'r', '^', 'P', 'Q', 'R', '|',
+  '7', 's', 't', 'u', '&', 'S', 'T', 'U', '/',
+  '8', 'v', 'w', 'x', '*', 'V', 'W', 'X', '<',
+  '9', 'y', 'z', '(', '-', 'Y', 'Z', '=', '>',
+};
+
 void
 KbdInit(void)
 {
@@ -26,7 +41,7 @@ KbdInit(void)
 key is pressed and it is earsed. Testing is not being done when
 the last key is a 'back key' */
 void
-get_test_key()
+KbdGetCh(void)
 {
   static uint8_t do_correct = 0;
 
@@ -78,7 +93,6 @@ get_test_key()
     do_correct++;
     test_key_idx--;
   }
-  KBD_GET_KEY;
   //  printf("do_correct:%d\n", do_correct);
 }
 
@@ -93,5 +107,3 @@ KbdIsShiftPressed(void)
 /* Redefine certain macros for testing purpose */
 #undef KBD_NOT_HIT
 #define KBD_NOT_HIT (0)
-#undef KBD_GET_KEY
-#define KBD_GET_KEY get_test_key()
