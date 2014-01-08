@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
@@ -5,13 +6,20 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "billing.h"
+#define __code
+#define __idata
+#define __pdata
+#define __sbit  uint8_t
+
+#define ERROR(msg) fprintf(stderr, msg)
 
 #include "assert.h"
+#include "billing.h"
 #include "crc.h"
 #include "lcd.h"
 #include "kbd.h"
 #include "i2c.h"
+#include "uart.h"
 #include "flash.h"
 #include "ep_store.h"
 #include "printer.h"
@@ -33,16 +41,15 @@
 /* End of overrides */
 
 #include "assert.c"
-#include "msg.c"
 #include "crc.c"
 #include "lcd.c"
 #include "kbd.c"
 #include "i2c.c"
+#include "uart.c"
 #include "flash.c"
 #include "ep_store.c"
 #include "printer.c"
 #include "menu.c"
-
 
 int
 main(void)
@@ -77,13 +84,14 @@ main(void)
     ui2 = rand()%FLASH_SECTOR_SIZE;
     for (ui1=0; ui1<ui2; ui1++) {
       if (0 == (rand() % 3))
-	inp[ui1] = 'A' + (rand()%26);
+	s[ui1] = 'A' + (rand()%26);
       else
-	inp[ui1] = 'a' + (rand()%26);
+	s[ui1] = 'a' + (rand()%26);
     }
     printer_prn_str(s);
   }
 
+#if 0
   billing b1 = {
     /* sale_info info; */
     { 16, 23, 59, 31, 12, 0 },
@@ -100,6 +108,7 @@ main(void)
     /* item temp; */
     { 0, 1234, XXXX, 1, 2, 235, "First bill item" },
   };
+#endif
 
   return 0;
 }

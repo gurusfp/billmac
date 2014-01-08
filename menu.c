@@ -1108,24 +1108,24 @@ void
 flash_item_add(uint8_t* byte_arr)
 {
   uint16_t item_last_modified, ui1;
-  uint8_t  ui2, ui3;
+  uint8_t  ui2;
 
   /* init */
   EEPROM_STORE_READ((uint16_t)&(EEPROM_DATA.item_last_modified), (uint8_t *)&item_last_modified, sizeof(uint16_t));
 
   /* Find empty space */
-  for (ui2=0; ui2<ITEM_MAX; ui2++) {
-    for (ui3=0; ui3<ITEM_SIZEOF; ui3++) {
-      if (0 != FlashReadByte(item_last_modified+ui3))
+  for (ui1=0; ui1<ITEM_MAX; ui1++) {
+    for (ui2=0; ui2<ITEM_SIZEOF; ui2++) {
+      if (0 != FlashReadByte(item_last_modified+ui2))
 	break;
     }
-    if (ui3!=ITEM_SIZEOF) break; /* Found empty space */
+    if (ui2==ITEM_SIZEOF) break; /* Found empty space */
     /* Next addr to check */
     item_last_modified += ITEM_SIZEOF;
     if (item_last_modified >= FLASH_ITEM_END)
       item_last_modified = FLASH_ITEM_START;
   }
-  assert(ui2<ITEM_MAX);
+  assert(ui1<ITEM_MAX);
 
   /* */
   for (ui1=item_last_modified, ui2=0; ui2<ITEM_SIZEOF; ui2++, ui1++) {
@@ -1347,7 +1347,7 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
 
   for (ui1=0; ui1<id; vptr=(uint16_t)si) {
     uint8_t ui3[3];
-    sale_info* si_t = ui3;
+    sale_info* si_t = (void *)ui3;
     ui3[0] = FlashReadByte((uint16_t)si);
     ui3[1] = FlashReadByte((uint16_t)(si+1));
     ui3[2] = FlashReadByte((uint16_t)(si+2));
