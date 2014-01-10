@@ -1,6 +1,6 @@
 .PHONY: clean
 
-CFLAGS = -I. -I.. -DDEBUG --stack-size 128 --stack-auto
+CFLAGS = -I. -I.. -DDEBUG --model-small --stack-size 128 --stack-auto
 CC = sdcc
 VPATH = .:..
 
