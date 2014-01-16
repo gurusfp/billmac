@@ -29,16 +29,6 @@
       {} \
   }
 
-#define LCD_Display() { \
-  uint8_t ui2;				\
-  LCD_cmd(LCD_CMD_CUR_10);  \
-    for(ui2=0; ui2<LCD_MAX_COL; ui2++)			\
-      LCD_wrchar(lcd_buf[0][ui2]);  \
-  LCD_cmd(LCD_CMD_CUR_20);  \
-    for(ui2=0; ui2<LCD_MAX_COL; ui2++)			\
-      LCD_wrchar(lcd_buf[1][ui2]);  \
-}
-
 void
 main(void)
 {

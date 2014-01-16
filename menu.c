@@ -501,6 +501,7 @@ menu_unimplemented(void)
 void
 menu_PrnHeader(void)
 {
+  uint16_t ui1;
   uint8_t ui2, ui3;
 
   PRINTER_ONLINE;
@@ -525,6 +526,7 @@ menu_PrnHeader(void)
 void
 menu_PrnFooter(void)
 {
+  uint16_t ui1;
   uint8_t ui2, ui3;
 
   uint16_t ui1 = &(EEPROM_DATA.prn_footer);
@@ -872,6 +874,10 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 {
   uint8_t col_id;
   uint8_t str[LCD_MAX_COL];
+  uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
+  uint8_t *lbp = (uint8_t *) lcd_buf[1], *lp;
+  uint32_t val = 0;
+  uint8_t ui1;
 
   if (MENU_ITEM_NONE == opt) return;
 
@@ -885,7 +891,7 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 
   /* Set the prompt */
   col_id = 0;
-  uint8_t *lp = &(lcd_buf[1][0]);
+  lp = &(lcd_buf[1][0]);
 
   /* Get a string */
   do {
@@ -917,11 +923,6 @@ menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
       KBD_RESET_KEY;
     }
   } while (KbdData != ASCII_ENTER);
-
-  uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
-  uint8_t *lbp = (uint8_t *) lcd_buf[1];
-  uint32_t val = 0;
-  uint8_t ui1;
 
   menu_error = 1;
   if ((MENU_ITEM_ID == item_type) || (MENU_ITEM_FLOAT == item_type)) {
