@@ -1,22 +1,27 @@
-#include<stdint.h>
-#include<p89v51rd2.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <p89v51rd2.h>
 
 #include "assert.h"
 #include "crc.h"
 #include "lcd.h"
 #include "kbd.h"
 #include "billing.h"
+#include "uart.h"
 #include "i2c.h"
 #include "flash.h"
 #include "ep_store.h"
+#include "printer.h"
 #include "menu.h"
 
 #include "crc.c"
 #include "lcd.c"
 #include "kbd.c"
+#include "uart.c"
 #include "i2c.c"
 #include "flash.c"
 #include "ep_store.c"
+#include "printer.c"
 #include "menu.c"
 
 #define MAIN_NOMAIN

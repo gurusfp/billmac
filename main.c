@@ -17,6 +17,7 @@ Timer0 in mode-1 has 16-bit auto-reload feature, that is 65K cycles.
 So, we should be interrupted every 10L/65K = 15.25 ~ 16
  */
 
+#pragma stackauto
 void
 Timer_Init(void)
 {
@@ -193,6 +194,8 @@ ex0_isr(void) __interrupt(IE0_VECTOR)    /* INT0 P3_2 (Clock) */
     drC = 0;
   }
 }
+
+#pragma restore
 
 #ifndef MAIN_NOMAIN
 

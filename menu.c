@@ -249,7 +249,7 @@ get_more_items:
 void
 menu_ShowBill(uint8_t mode)
 {
-  uint8_t ui2, ui3, ui4, ui5;
+  uint8_t ui2, ui3, ui4;
   uint16_t sale_info, ui1;
   billing *bp;
 
@@ -302,8 +302,8 @@ menu_ShowBill(uint8_t mode)
     ui4 = (uint8_t)&(((billing *)0)->temp);
     for (ui3=0; ui3<bp->info.n_items; ui3++, ui4++) {
       ui1 = flash_item_find(bp->items[ui3].item_id);
-      for (ui5=0; ui5<ITEM_SIZEOF; ui4++, ui5++) {
-	bufSS[ui4] = FlashReadByte(ui1+ui5);
+      for (ui2=0; ui2<ITEM_SIZEOF; ui4++, ui2++) {
+	bufSS[ui4] = FlashReadByte(ui1+ui2);
       }
       bp->bi[ui3].vat_sel = bp->temp.vat_sel;
       bp->bi[ui3].has_serv_tax = bp->temp.has_serv_tax;
@@ -417,7 +417,7 @@ menu_DelItem(uint8_t mode)
 void
 menu_BillReports(uint8_t mode)
 {
-  uint16_t ui1;
+  uint16_t ui1, next_record;
   uint8_t ui3, ui4, ui5;
   billing *bp = (void *)bufSS;
 
@@ -433,7 +433,7 @@ menu_BillReports(uint8_t mode)
   bp->ui2 = bp->ui4 = bp->ui6 = bp->flags = 0;
   bp->ui9 = bp->ui11 = bp->ui13 = bp->ui15 = 0;
 
-  uint16_t next_record = start_record;
+  next_record = start_record;
   while (1) {
     /* Only process valid records... */
     if (FLASH_ADDR_INVALID == start_record)
@@ -507,7 +507,7 @@ menu_PrnHeader(void)
   PRINTER_ONLINE;
 
   /* Shop name */
-  uint16_t ui1 = &(EEPROM_DATA.shop_name);
+  ui1 = (uint16_t) &(EEPROM_DATA.shop_name);
   for (ui2=0; ui2<SHOP_NAME_SZ; ui2++) {
     EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
     PRINTER_PRINT(ui3);
@@ -515,7 +515,7 @@ menu_PrnHeader(void)
   }
 
   /* Header */
-  ui1 = &(EEPROM_DATA.prn_header);
+  ui1 = (uint16_t) &(EEPROM_DATA.prn_header);
   for (ui2=0; ui2<HEADER_MAX_SZ; ui2++) {
     EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
     PRINTER_PRINT(ui3);
@@ -529,7 +529,7 @@ menu_PrnFooter(void)
   uint16_t ui1;
   uint8_t ui2, ui3;
 
-  uint16_t ui1 = &(EEPROM_DATA.prn_footer);
+  ui1 = (uint16_t) &(EEPROM_DATA.prn_footer);
   for (ui2=0; ui2<HEADER_MAX_SZ; ui2++) {
     EEPROM_STORE_READ(ui1, (uint8_t *)&ui3, sizeof(uint8_t));
     PRINTER_PRINT(ui3);
@@ -571,7 +571,6 @@ menu_PrnFullBill(billing *bp)
 
   /* Item */
   {
-    uint8_t str[16];
     uint16_t tot_tax = 0, tot_bill = 0, serv_tax = 0, ui1, ui1_2;
     uint8_t ui2, ui3, ui4, ui5;
     ui3 = bp->info.n_items;
@@ -673,8 +672,8 @@ menu_PrnTaxReportFooter(billing *bp)
 void
 menu_ModVat(uint8_t mode)
 {
-  uint16_t ui1;
-  uint8_t  ui2, ui3, choice[MENU_PROMPT_LEN*4], vat;
+  uint16_t ui1; /* FIXME: ui1 should be of 32 bits */
+  uint8_t  ui2, ui3, choice[MENU_PROMPT_LEN*4];
 
   if (MENU_ITEM_NONE == arg1.valid)
     return;
@@ -728,7 +727,7 @@ menu_Header(uint8_t mode)
     arg2.valid = MENU_ITEM_NONE;
     menu_getopt(menu_str1+(MENU_STR1_IDX_ITEM*MENU_PROMPT_LEN), &arg2, MENU_ITEM_STR);
   } while (chars < mode_max);
-  menu_str1[chars] = 0;
+  bufSS[chars] = 0;
 
   if (chars) {
     if ((mode&(~MENU_MODEMASK)) == MENU_MFOOTER) {
@@ -796,7 +795,7 @@ menu_SetPasswd(uint8_t mode)
 void
 menu_SetServTax(uint8_t mode)
 {
-  uint16_t ui1;
+  uint16_t ui1; /* FIXME: ui1 should be of 32 bits */
 
   if (MENU_ITEM_NONE == arg1.valid)
     return;
@@ -811,7 +810,7 @@ void
 menu_SetDateTime(uint8_t mode)
 {
   uint16_t ui1 = 0;
-  uint8_t ymd[3], ui2;
+  uint8_t ymd[3];
 
   if ((MENU_ITEM_NONE == arg1.valid) || (MENU_ITEM_NONE == arg2.valid))
     return;
@@ -829,7 +828,6 @@ menu_SetDateTime(uint8_t mode)
 void
 menu_RunDiag(uint8_t mode)
 {
-  uint16_t ui1;
   uint8_t  ui2, ui3, ui4;
 
   /* Run LCD
@@ -873,7 +871,6 @@ void
 menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt)
 {
   uint8_t col_id;
-  uint8_t str[LCD_MAX_COL];
   uint8_t item_type = (opt & MENU_ITEM_TYPE_MASK);
   uint8_t *lbp = (uint8_t *) lcd_buf[1], *lp;
   uint32_t val = 0;
@@ -1212,7 +1209,7 @@ flash_item_delete(uint16_t id)
   FlashEraseSector((uint16_t)block);
   for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
     if (0 != bufSS[ui1])
-      FlashWriteByte(block+ui1, bufSS[ui1]);
+      FlashWriteByte((uint16_t)(block+ui1), bufSS[ui1]);
   }
 
   /* end block */
@@ -1228,7 +1225,7 @@ flash_item_delete(uint16_t id)
     FlashEraseSector((uint16_t)block);
     for (ui1=0; ui1<FLASH_SECTOR_SIZE; ui1++) {
       if (0 != bufSS[ui1])
-	FlashWriteByte(block+ui1, bufSS[ui1]);
+	FlashWriteByte((uint16_t)(block+ui1), bufSS[ui1]);
     }
   }
 
@@ -1333,7 +1330,7 @@ uint16_t
 flash_sale_find(uint8_t *dmy, uint16_t id)
 {
   sale_info  *si;
-  uint16_t ui1, ui2, vptr;
+  uint16_t ui1, vptr;
   uint8_t idx;
 
   idx = (dmy[1] - 1) * 4;
@@ -1368,8 +1365,8 @@ flash_sale_find(uint8_t *dmy, uint16_t id)
   assert(vptr);
   si = (sale_info *)vptr;
   if ((si->property) & SALE_INFO_DELETED)
-    return (void *) FLASH_ADDR_INVALID;
-  return vptr;
+    return (uint16_t) FLASH_ADDR_INVALID;
+  return (uint16_t)vptr;
 }
 
 void
