@@ -24,12 +24,12 @@ void
 expect_else_assert(const char *s, const char *f, const uint32_t l)
 {
   uint8_t ui1;
-  if (0 == strcmp(s, expect_assert[0])) {
+  if ((NULL != expect_assert[0]) && (0 == strcmp(s, expect_assert[0]))) {
     printf("Expect Assert Obtained :'%s', from '%s:%0d'", s, f, l);
     for (ui1=0; expect_assert[ui1]; ui1++) {
       expect_assert[ui1] = expect_assert[ui1+1];
     }
   } else {
-    printf("ASSERT ERROR %s %s :%d\n", s, f, l);
+    printf("ASSERT ERROR '%s' '%s' :%d\n", s, f, l);
   }
 }
