@@ -57,10 +57,10 @@ struct ep_store_layout {
 };                                  /* Total  =  500 */
 
 #define EEPROM_DATA               (*((struct ep_store_layout *)0))
-#define EEPROM_STORE_READ         i2cReadBytes
-#define EEPROM_STORE_WRITE_NoSig  i2cWriteBytes
+#define EEPROM_STORE_READ         eepromReadBytes
+#define EEPROM_STORE_WRITE_NoSig  eepromWriteBytes
 #define EEPROM_STORE_WRITE(A, B, C) { 					\
-    i2cWriteBytes(A, B, C);						\
+    eepromWriteBytes(A, B, C);						\
     EEPROM_STORE_WRITE_Sig						\
   }
 

@@ -1,13 +1,11 @@
 #ifndef I2C_H
 #define I2C_H
 
-void i2cInit(void);
-void i2cWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes);
-void i2cReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes);
-void timerDateSet(uint8_t year, uint8_t month, uint8_t date);
-void timerDateGet(uint8_t *ymd);
-void timerTimeSet(uint8_t hour, uint8_t min);
-void timerTimeGet(uint8_t *hm);
+void    i2cInit(void);
+void    eepromWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes);
+void    eepromReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes);
+void    ds1307Write(uint8_t addr, uint8_t data);
+uint8_t ds1307Read(uint8_t addr);
 
 #define ACK      0
 #define NACK     1
@@ -15,14 +13,14 @@ void timerTimeGet(uint8_t *hm);
 #define SCL      P3_4
 #define SDA      P3_5
 
+/* define it to K-bits */
+#define EP24C                      2
+#define EEPROM_SIZE       (EP24C<<7)
+
 #define EEPROM_CTRL_WRITE 0xA0
 #define EEPROM_CTRL_READ  0xA1
 #define TIMER_CTRL_WRITE  0xD0
 #define TIMER_CTRL_READ   0xD1
-
-#define I2C_ADDR_IS_1BYTE 0x8000
-
-#define EEPROM_SIZE (1<<13)
 
 #define TIMER_ADDR_MIN    1
 #define TIMER_ADDR_HOUR   2
@@ -37,52 +35,73 @@ void timerTimeGet(uint8_t *hm);
   __endasm
 
 #define I2C_START_BIT	 \
+  SDA = 1;		 \
+  SCL = 1;		 \
   SDA = 0;		 \
-  NOP2;			 \
-  SCL = 0;		 \
-  NOP2
+  SCL = 0
 
 #define I2C_STOP_BIT	 \
   SDA = 0;		 \
-  NOP2;			 \
   SCL = 1;		 \
-  NOP2;			 \
   SDA = 1
 
 #define I2C_GET_ACK(a)	   \
   SDA = 1;		   \
   SCL = 1;		   \
-  NOP2;			   \
   a = SDA;		   \
   SCL = 0
+
 
 #define I2C_SEND_ACK(a)	   \
   SDA = a;		   \
   SCL = 1;		   \
-  NOP2;			   \
   SCL = 0
 
 #define I2C_SEND_BYTE(b)    \
-  ui1=8;		    \
-  do {			    \
-    ui1--;		    \
-    SDA = b >> ui1;	    \
+  for (ui3=8; ui3>0;) {	    \
+    ui3--;		    \
+    CY = (b >> ui3) & 0x1;  \
+    SDA = CY;		    \
     SCL=1;		    \
-    NOP2;		    \
     SCL=0;		    \
-  } while (ui1>0)
+  }
 
 #define I2C_GET_BYTE(b)     \
+  SDA = 1;		    \
   b = 0;		    \
-  ui1=8;		    \
-  do {			    \
+  for (ui3=0; ui3<8;ui3++) {	    \
     SCL=1;		    \
-    ui1--;		    \
     b <<= 1;		    \
-    NOP2;		    \
     b |= SDA;		    \
     SCL=0;		    \
-  } while (ui1>0)
+  }
+
+#define timerDateSet(year, month, date) \
+  DISABLE_ALL_INTERRUPTS;		\
+  ds1307Write(0x04, date);			\
+  ds1307Write(0x05, month);		\
+  ds1307Write(0x06, year);			\
+  ENABLE_ALL_INTERRUPTS
+
+#define timerDateGet(ymd)			\
+  DISABLE_ALL_INTERRUPTS;			\
+  ymd[2] = ds1307Read((uint8_t)TIMER_ADDR_DATE);	\
+  ymd[1] = ds1307Read((uint8_t)TIMER_ADDR_MONTH);	\
+  ymd[0] = ds1307Read((uint8_t)TIMER_ADDR_YEAR);	\
+  ENABLE_ALL_INTERRUPTS
+
+#define timerTimeSet(hour, min)			\
+  DISABLE_ALL_INTERRUPTS;			\
+  ds1307Write(0x01, min);				\
+  ds1307Write(0x02, hour);				\
+  ds1307Write(0x00, 0);				\
+  ENABLE_ALL_INTERRUPTS
+
+#define timerTimeGet(hm)			\
+  DISABLE_ALL_INTERRUPTS;			\
+  hm[1] = ds1307Read((uint8_t)TIMER_ADDR_MIN);	\
+  hm[0] = ds1307Read((uint8_t)TIMER_ADDR_HOUR);	\
+  ENABLE_ALL_INTERRUPTS
 
 #define PREV_MONTH(M)       \
   ((M==1) ? 12 : (M-1))

@@ -39,7 +39,7 @@ KbdInit(void)
   KbdDataAvail = 0;
 }
 
-#pragma stackauto
+//#pragma stackauto
 void
 KbdScan(void)
 {
@@ -116,7 +116,7 @@ KbdScan(void)
   if (0 ==  (gTimer0 & 0x80))
     gTimer0++;
 }
-#pragma restore
+//#pragma restore
 
 void
 KbdGetCh(void)

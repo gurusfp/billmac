@@ -14,203 +14,138 @@ i2cInit(void)
   SCL = 1;
 }
 
-/* (addr & 0x8000) : Addr is 8-bits */
-__sbit static ack;
 void
-i2cWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
-{
-  uint8_t ui1;
-
-  do {
-    I2C_START_BIT;
-    I2C_SEND_BYTE(EEPROM_CTRL_WRITE);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
-
-  /* send addr */
-  if ((uint16_t)0 == (addr & I2C_ADDR_IS_1BYTE)) {
-    ui1 = addr>>8;
-    I2C_SEND_BYTE(ui1);
-    I2C_GET_ACK(ack);
-    assert(ACK == ack);
+delayms(uint8_t ms)
+{   
+  uint8_t ui;   
+  while(ms--) {
+    for(ui = 0; ui < 120; ui++);
   }
-  ui1 = addr;
-  I2C_SEND_BYTE(ui1);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
+}
 
-  /* */
-  for (; n_bytes>0; n_bytes--) {
+void
+eepromWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
+{
+  uint8_t ui2, ui3;
+
+  DISABLE_ALL_INTERRUPTS;
+
+  for (; n_bytes>0; n_bytes--, val++, addr++) {
+    I2C_START_BIT;
+    I2C_SEND_BYTE(EEPROM_CTRL_WRITE);   
+    I2C_GET_ACK(CY);
+
+#if EP24C > 2
+    ui2 = addr>>8;
+    I2C_SEND_BYTE(ui2);
+    I2C_GET_ACK(CY);
+#endif
+
+    ui2 = (uint8_t)addr;
+    I2C_SEND_BYTE(ui2);
+    I2C_GET_ACK(CY);
+
     I2C_SEND_BYTE(val[0]);
-    val ++;
-    I2C_GET_ACK(ack);
-    assert(ACK == ack);
+    I2C_GET_ACK(CY);
+    I2C_STOP_BIT;
+
+    delayms(10);
   }
 
-  I2C_STOP_BIT;
+  ENABLE_ALL_INTERRUPTS;
 }
 
 void
-i2cReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
+eepromReadBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
 {
-  uint8_t ui1, ui2=0;
+  uint8_t ui2, ui3;
 
-  do {
+  DISABLE_ALL_INTERRUPTS;
+
+  for (; n_bytes>0; n_bytes--, val++, addr++) {
     I2C_START_BIT;
-    I2C_SEND_BYTE(EEPROM_CTRL_WRITE);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
 
-  /* send addr */
-  I2C_SEND_BYTE((uint8_t)addr);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
+    I2C_SEND_BYTE(EEPROM_CTRL_WRITE);   
+    I2C_GET_ACK(CY);
 
-  do {
+#if EP24C > 2
+    ui2 = addr>>8;
+    I2C_SEND_BYTE(ui2);
+    I2C_GET_ACK(CY);
+#endif
+
+    ui2 = (uint8_t)addr;
+    I2C_SEND_BYTE(ui2);
+    I2C_GET_ACK(CY);
+
     I2C_START_BIT;
-    I2C_SEND_BYTE(EEPROM_CTRL_READ);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
+    I2C_SEND_BYTE(EEPROM_CTRL_READ);   
+    I2C_GET_ACK(CY);
 
-  /* */
-  for (; n_bytes>1; n_bytes--) {
     I2C_GET_BYTE(ui2);
-    I2C_SEND_ACK(ACK);
+    I2C_SEND_ACK(1);
     val[0] = ui2;
-    val++;
+
+    I2C_STOP_BIT;
   }
-  I2C_GET_BYTE(*val);
-  I2C_SEND_ACK(NACK);
-  val[0] = ui2;
-  val++;
 
+  ENABLE_ALL_INTERRUPTS;
+}
+    
+void
+ds1307Write(uint8_t addr, uint8_t data)
+{
+  uint8_t ui3;
+
+  I2C_START_BIT;
+
+  do {
+    I2C_SEND_BYTE(TIMER_CTRL_WRITE);
+    I2C_GET_ACK(CY);
+  } while (NACK == CY);
+
+  do {
+    I2C_SEND_BYTE(addr);
+    I2C_GET_ACK(CY);
+  } while (NACK == CY);
+
+  do {
+    I2C_SEND_BYTE(data);
+    I2C_GET_ACK(CY);
+  } while (NACK == CY);
+
+  CY=0;
   I2C_STOP_BIT;
 }
 
-void
-timerDateSet(uint8_t year, uint8_t month, uint8_t date)
+uint8_t
+ds1307Read(uint8_t addr)
 {
-  uint8_t ui1;
+  uint8_t ui3, data;
+
+  I2C_START_BIT;
 
   do {
-    I2C_START_BIT;
     I2C_SEND_BYTE(TIMER_CTRL_WRITE);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
-
-  /* send addr */
-  I2C_SEND_BYTE((uint8_t)TIMER_ADDR_DATE);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_SEND_BYTE(date);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_SEND_BYTE(month);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_SEND_BYTE(year);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_STOP_BIT;
-}
-
-void
-timerDateGet(uint8_t *ymd)
-{
-  uint8_t ui1, ui2;
+    I2C_GET_ACK(CY);
+  } while (NACK == CY);
 
   do {
-    I2C_START_BIT;
-    I2C_SEND_BYTE(TIMER_CTRL_WRITE);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
+    I2C_SEND_BYTE(addr);
+    I2C_GET_ACK(CY);
+  } while (NACK == CY);
 
-  /* send addr */
-  I2C_SEND_BYTE((uint8_t)TIMER_ADDR_DATE);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
+  I2C_START_BIT;
 
   do {
-    I2C_START_BIT;
     I2C_SEND_BYTE(TIMER_CTRL_READ);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
+    I2C_GET_ACK(CY);
+  } while (NACK == CY);
 
-  I2C_GET_BYTE(ui2);
-  I2C_SEND_ACK(ACK);
-  ymd[0] = ui2;
-
-  I2C_GET_BYTE(ui2);
-  I2C_SEND_ACK(ACK);
-  ymd[1] = ui2;
-
-  I2C_GET_BYTE(ui2);
-  I2C_SEND_ACK(NACK);
-  ymd[2] = ui2;
-
+  I2C_GET_BYTE(data);
+  I2C_SEND_ACK(1);
+  CY=0;
   I2C_STOP_BIT;
-}
 
-void
-timerTimeSet(uint8_t hour, uint8_t min)
-{
-  uint8_t ui1;
-
-  do {
-    I2C_START_BIT;
-    I2C_SEND_BYTE(TIMER_CTRL_WRITE);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
-
-  /* send addr */
-  I2C_SEND_BYTE((uint8_t)TIMER_ADDR_MIN);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_SEND_BYTE(min);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_SEND_BYTE(hour);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  I2C_STOP_BIT;
-}
-
-void
-timerTimeGet(uint8_t *hm)
-{
-  uint8_t ui1, ui2;
-
-  do {
-    I2C_START_BIT;
-    I2C_SEND_BYTE(TIMER_CTRL_WRITE);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
-
-  /* send addr */
-  I2C_SEND_BYTE((uint8_t)TIMER_ADDR_MIN);
-  I2C_GET_ACK(ack);
-  assert(ACK == ack);
-
-  do {
-    I2C_START_BIT;
-    I2C_SEND_BYTE(TIMER_CTRL_READ);
-    I2C_GET_ACK(ack);
-  } while (NACK == ack);
-
-  I2C_GET_BYTE(ui2);
-  I2C_SEND_ACK(ACK);
-  hm[1] = ui2;
-
-  I2C_GET_BYTE(ui2);
-  I2C_SEND_ACK(NACK);
-  hm[0] = ui2;
-
-  I2C_STOP_BIT;
+  return(data);
 }
