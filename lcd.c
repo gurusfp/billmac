@@ -16,12 +16,11 @@ LCD_init(void)
   LCD_wrnib(3);
   delayms(100);
   LCD_wrnib(3);
-  delayms(100);
+  delayms(10);
   LCD_wrnib(3);
-  delayms(100);
+  delayms(10);
   LCD_wrnib(2);
-  delayms(100);
-  delayms(100);
+  delayms(10);
 #endif
 
   /*  Function set: 2 Line, 8-bit, 5x7 dots */

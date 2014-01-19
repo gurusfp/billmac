@@ -3,6 +3,7 @@
 
 #define  assert(X)
 
+#include "delay.h"
 #include "lcd.h"
 #include "i2c.h"
 #include "kbd.h"
@@ -24,15 +25,15 @@ main(void)
   i2cInit();
   Timer_Init();
 
-  LCD_busy
-  LCD_CLRSCR
+  delayms(2);
+  LCD_CLRSCR;
 
   LCD_WR_LINE(0, 0, "Hello World 7");
   for (ui1=0; ui1<0x4FF; ui1++)
-    LCD_busy;
+    delayms(2);
   LCD_WR_LINE(1, 0, "Hello World 8");
   for (ui1=0; ui1<0x4FF; ui1++)
-    LCD_busy;
+    delayms(2);
 
   return 0;
 }

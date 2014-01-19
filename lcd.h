@@ -116,9 +116,9 @@ uint8_t _lcd_idx = 0;
 #endif
 
 #define LCD_CLRSCR {				\
-  uint8_t ui1;				\
+  uint8_t ui1_t;				\
   lcd_buf_p = (uint8_t *)lcd_buf;		\
-  for (ui1=0; ui1<(LCD_MAX_COL*LCD_MAX_ROW); ui1++) {	\
+  for (ui1_t=0; ui1_t<(LCD_MAX_COL*LCD_MAX_ROW); ui1_t++) {	\
     lcd_buf_p[0] = ' ';				\
     lcd_buf_p++;				\
   }						\
@@ -127,15 +127,15 @@ uint8_t _lcd_idx = 0;
 }
 
 #define LCD_WR_LINE(x, y, str)  {	\
-    uint8_t ui1, ui2;			\
+    uint8_t ui1_t, ui2_t;			\
   lcd_buf_p = lcd_buf[x];		\
   lcd_buf_p += y;			\
-  for (ui1=0, ui2=0; (ui1<LCD_MAX_COL); ui1++) {	\
-    if (0 == ((char *)str)[ui2]) {			\
+  for (ui1_t=0, ui2_t=0; (ui1_t<LCD_MAX_COL); ui1_t++) {	\
+    if (0 == ((char *)str)[ui2_t]) {			\
       lcd_buf_p[0] = ' ';		\
     } else {				\
-      lcd_buf_p[0] = ((char *)str)[ui2];	\
-      ui2++;					\
+      lcd_buf_p[0] = ((char *)str)[ui2_t];	\
+      ui2_t++;					\
     }					\
     lcd_buf_p++;			\
   }					\
@@ -144,15 +144,15 @@ uint8_t _lcd_idx = 0;
 }
 
 #define LCD_WR_LINE_N(x, y, str, len)  {	\
-  uint8_t ui1;			        \
+  uint8_t ui1_t;			        \
   lcd_buf_p = lcd_buf[x];		\
   lcd_buf_p += y;			\
-  for (ui1=0; (ui1<len); ui1++) {	\
-    lcd_buf_p[0] = str[ui1];		\
+  for (ui1_t=0; (ui1_t<len); ui1_t++) {	\
+    lcd_buf_p[0] = str[ui1_t];		\
     lcd_buf_p++;			\
   }					\
-  for (; ui1<LCD_MAX_COL; ui1++) {	\
-    lcd_buf_p[ui1] = ' ';		\
+  for (; ui1_t<LCD_MAX_COL; ui1_t++) {	\
+    lcd_buf_p[ui1_t] = ' ';		\
   }					\
   lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
@@ -164,18 +164,18 @@ uint8_t _lcd_idx = 0;
 }
 
 #define LCD_SCROLL {			\
-  uint8_t ui1;				\
-  for (ui1=0; ui1<LCD_MAX_COL; ui1++) {	\
-    lcd_buf[0][ui1] = lcd_buf[1][ui1];	\
+  uint8_t ui1_t;				\
+  for (ui1_t=0; ui1_t<LCD_MAX_COL; ui1_t++) {	\
+    lcd_buf[0][ui1_t] = lcd_buf[1][ui1_t];	\
   }					\
   lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\
 }
 
 #define LCD_WR_N(str, len) {	 \
-  uint8_t ui1;			 \
-  for (ui1=0; ui1<len; ui1++) {	 \
-    lcd_buf_p[0] = str[ui1];	 \
+  uint8_t ui1_t;			 \
+  for (ui1_t=0; ui1_t<len; ui1_t++) {	 \
+    lcd_buf_p[0] = str[ui1_t];	 \
     lcd_buf_p++;		 \
   }				 \
   lcd_buf_prop |= LCD_PROP_DIRTY;		\
@@ -183,9 +183,9 @@ uint8_t _lcd_idx = 0;
 }
 
 #define LCD_WR(str) {	 \
-  uint8_t ui1;			 \
-  for (ui1=0; 0 != str[ui1]; ui1++) {	 \
-    lcd_buf_p[0] = str[ui1];	 \
+  uint8_t ui1_t;			 \
+  for (ui1_t=0; 0 != str[ui1_t]; ui1_t++) {	 \
+    lcd_buf_p[0] = str[ui1_t];	 \
     lcd_buf_p++;		 \
   }				 \
   lcd_buf_prop |= LCD_PROP_DIRTY;		\
@@ -193,13 +193,11 @@ uint8_t _lcd_idx = 0;
 }
 
 #define LCD_PUT_UINT8X(ch) {			\
-  uint8_t ui2 = (ch>>4) & 0xF;			\
-  lcd_buf_p[0] = ui2;				\
-  lcd_buf_p[0] = (ui2>9) ? 'A' : '0';		\
+  uint8_t ui2_a = (ch>>4) & 0xF;			\
+  lcd_buf_p[0] = ((ui2_a>9) ? 'A'-10 : '0') + ui2_a;	\
   lcd_buf_p++;					\
-  ui2 = ch & 0xF;				\
-  lcd_buf_p[0] = ui2;				\
-  lcd_buf_p[0] = (ui2>9) ? 'A' : '0';		\
+  ui2_a = ch & 0xF;				\
+  lcd_buf_p[0] = ((ui2_a>9) ? 'A'-10 : '0') + ui2_a;	\
   lcd_buf_p++;					\
   lcd_buf_prop |= LCD_PROP_DIRTY;		\
   assert(lcd_buf_p <= (((uint8_t *)lcd_buf)+32));	\

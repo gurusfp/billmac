@@ -21,13 +21,11 @@ So, we should be interrupted every 10L/65K = 15.25 ~ 16
 void
 Timer_Init(void)
 {
-  TMOD |= 0x11;  /* T0:Mode_1 */
+  TMOD |= 0x1;  /* T0:Mode_1 */
   TR0 = 1;      /* T0Run, IE */
-  TR1 = 1;      /* T1Run, IE */
   ET0 = 1;      /* Enable Timer0 intrs */
-  ET1 = 1;      /* Enable Timer0 intrs */
 
-  /* interrupt prioiryt : EX0 is first */
+  /* interrupt priority : EX0 is first */
   IP0 = 1;
 
   /* EX0 interrupt for PS2 Keyboard */
@@ -70,10 +68,15 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
   LCD_cmd(LCD_CMD_CLRSCR);
   LCD_cmd(LCD_CMD_CUR_10);
   lcd_buf_p = (uint8_t*) lcd_buf;
-  for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
+  for (ui2=0; ui2<LCD_MAX_COL-1; ui2++) {
     LCD_wrchar(lcd_buf_p[0]);
     lcd_buf_p++;
   }
+#if 1 /* FIXME: remove the -1 above also with this code */
+  timer0_count++;
+  LCD_wrchar('0'+(timer0_count%10));
+  lcd_buf_p++;
+#endif
   LCD_cmd(LCD_CMD_CUR_20);
   for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
     LCD_wrchar(lcd_buf_p[0]);
@@ -86,20 +89,6 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
   /* enable all interrupts */
   TF0 = 0;     /* Clear pending interrupt */
   ET0 = 1;  TR0 = 1;  EA  = 1;
-}
-
-void
-Timer1_isr(void) __interrupt(TF1_VECTOR)
-{
-  EA  = 0;      /* all interrupts disable */
-  ET1 = 0;     /* Disable Timer1 intrs */
-  TR1 = 0;      /* T0Run, IE */
-
-  /* Enable next entry */
-  TF1 = 0;     /* Clear pending interrupt */
-//  ET1 = 1;     /* Enable Timer1 intrs */
-//  TR1 = 1;      /* T0Run, IE */
-  EA  = 1;      /* all interrupts enable */
 }
 
 __sbit ps2ShiftHit = 0, ps2CtrlHit = 0, ps2AltHit = 0;
@@ -195,6 +184,19 @@ ex0_isr(void) __interrupt(IE0_VECTOR)    /* INT0 P3_2 (Clock) */
   }
 }
 
+void
+UartSpi_isr(void) __interrupt(SI0_VECTOR)
+{
+  DISABLE_ALL_INTERRUPTS;
+
+  if (RI) { /* UART Receive */
+    UART_RCV_DATA_PUSH;
+    RI = 0;
+  }
+
+  ENABLE_ALL_INTERRUPTS;
+}
+
 //#pragma restore
 
 #ifndef MAIN_NOMAIN
@@ -209,7 +211,7 @@ main_start:
   i2cInit();
   LCD_init();
   Timer_Init();
-  
+  uart_init();
 
   /* */
   while(1) {
