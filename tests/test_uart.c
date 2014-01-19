@@ -33,24 +33,21 @@ main(void)
   delayms(100);
   LCD_POS(1, 0);
 #if 1
+  ui2 = 0xEE;
   for (ui3=0; ui3<8; ui3++) {
     LCD_POS(1, 0);
-    ui2 = 0xEE;
-    LCD_PUT_UINT8X(ui2);
     UART_DATA_RECIEVE(ui2);
     LCD_PUT_UINT8X(ui2);
   }
 #else
   ui2 = 0xAA;
   for (ui3=0; ui3<4; ui3++) {
+    LCD_POS(1, 0);
     LCD_PUT_UINT8X(ui2);
     uart_putc(ui2);
     ui2 ++;
   }
 #endif
-
-  for (ui1=0; ui1<0xFF; ui1++)
-    delayms(2);
 
   return 0;
 }
