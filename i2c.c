@@ -15,15 +15,6 @@ i2cInit(void)
 }
 
 void
-delayms(uint16_t ms)
-{   
-  uint8_t ui;   
-  while(ms--) {
-    for(ui = 0; ui < 120; ui++);
-  }
-}
-
-void
 eepromWriteBytes(uint16_t addr, uint8_t *val, uint8_t n_bytes)
 {
   uint8_t ui2, ui3;

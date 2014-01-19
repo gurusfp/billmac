@@ -4,18 +4,23 @@
 #define LCD_MAX_ROW            2
 #define LCD_MAX_COL           16
 
-#define LCD_PORT  P1
-#define LCD_rs    P2_0
-#define LCD_rw    P2_1
-#define LCD_en    P2_2
+#define LCD_DPORT_SIZE         4
 
-#define LCD_busy {  \
-  uint8_t i, j;     \
-  for(i=0;i<0x2;i++)	   \
-    for(j=0;j<0xFF;j++) {} \
-}
+#if 8 == LCD_DPORT_SIZE
+# define LCD_PORT  P1
+# define LCD_rs    P2_0
+# define LCD_en    P2_1
+#elif 4 == LCD_DPORT_SIZE
+# define LCD_PORT(val)       \
+  P2_2 = (val & 0x1);	     \
+  P2_3 = ((val>>1) & 0x1);   \
+  P2_4 = ((val>>2) & 0x1);   \
+  P2_5 = ((val>>3) & 0x1)
+# define LCD_en    P2_1
+# define LCD_rs    P2_0
+#endif
 
-#define LCD_PROP_NOECHO_L2  1
+#define LCD_PROP_NOECHO_L2      1
 #define LCD_PROP_DIRTY      (1<<1)
 
 #ifdef  UNIT_TEST
@@ -50,30 +55,63 @@ uint8_t _lcd_idx = 0;
 # define LCD_CMD_DISON_CURON   0x0E   /* Display ON ,Cursor ON */
 # define LCD_CMD_CUR_10        0x80   /* Force cursor to the beginning of 1st line */
 # define LCD_CMD_CUR_20        0xC0   /* Force cursor to the beginning of 2nd line */
-# define LCD_CMD_2LINE_5x7     0x38   /* Use 2 lines and 5×7 matrix */
 # define LCD_ACT_LINE2         0x3C   /* Activate second line */
 
+#if 8 == LCD_DPORT_SIZE
+
+# define LCD_CMD_2LINE_5x7     0x38   /* Use 2 lines and 5×7 matrix */
+
 # define LCD_cmd(var)   \
-  LCD_PORT = var;      \
-  LCD_rs = 0;	       \
-  LCD_rw = 0;	       \
-  LCD_en = 1;	       \
-  LCD_en = 0;	       \
-  LCD_busy
+  LCD_PORT = var;	\
+  LCD_rs = 0;		\
+  LCD_en = 1;		\
+  LCD_en = 0;		\
+  delayms(2)
 
 # define LCD_idle_drive \
-  LCD_PORT = 0;        \
-  LCD_rs = 0;	       \
-  LCD_rw = 0;	       \
-  LCD_en = 0;
+  LCD_PORT = 0;		\
+  LCD_rs = 0;		\
+  LCD_en = 0
 
-# define LCD_wrchar(var) \
-  LCD_PORT = var;   \
-  LCD_rs = 1; \
-  LCD_rw = 0; \
-  LCD_en = 1; \
-  LCD_en = 0; \
-  LCD_busy
+# define LCD_wrchar(var)\
+  LCD_PORT = var;	\
+  LCD_rs = 1;		\
+  LCD_en = 1;		\
+  LCD_en = 0;		\
+  delayms(2)
+
+#elif 4 == LCD_DPORT_SIZE
+
+# define LCD_CMD_2LINE_5x7     0x28   /* Use 2 lines and 5×7 matrix */
+
+# define LCD_wrnib(var)	\
+  LCD_PORT(var);	\
+  LCD_rs = 1;		\
+  LCD_en = 1;		\
+  LCD_en = 0
+
+# define LCD_cmd(var)   \
+  LCD_PORT(var>>4);	\
+  LCD_rs = 0;		\
+  LCD_en = 1;		\
+  LCD_en = 0;		\
+  LCD_PORT(var);	\
+  LCD_rs = 0;		\
+  LCD_en = 1;		\
+  LCD_en = 0;		\
+  delayms(2)
+
+# define LCD_idle_drive \
+  LCD_PORT(0);		\
+  LCD_rs = 0;		\
+  LCD_en = 0
+
+# define LCD_wrchar(var)\
+  LCD_wrnib(var>>4);	\
+  LCD_wrnib(var);	\
+  delayms(2)
+
+#endif
 
 #endif
 
@@ -180,6 +218,5 @@ extern uint8_t lcd_buf_prop;
 extern uint8_t *lcd_buf_p;
 extern uint8_t lcd_buf[LCD_MAX_ROW][LCD_MAX_COL];
 extern void LCD_init(void);
-extern void LCD_refresh(void);
 
 #endif
