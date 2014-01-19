@@ -6,6 +6,7 @@
 #include "lcd.h"
 #include "i2c.h"
 #include "kbd.h"
+#include "main.h"
 
 #include "lcd.c"
 #include "i2c.c"

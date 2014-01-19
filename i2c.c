@@ -15,7 +15,7 @@ i2cInit(void)
 }
 
 void
-delayms(uint8_t ms)
+delayms(uint16_t ms)
 {   
   uint8_t ui;   
   while(ms--) {

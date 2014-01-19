@@ -14,8 +14,8 @@
       {} \
   }
 
-#define DISABLE_ALL_INTERRUPTS        EA  = 1
-#define ENABLE_ALL_INTERRUPTS         EA  = 0
+#define DISABLE_ALL_INTERRUPTS        EA  = 0
+#define ENABLE_ALL_INTERRUPTS         EA  = 1
 
 extern __sbit ps2ShiftHit, ps2CtrlHit, ps2AltHit;
 

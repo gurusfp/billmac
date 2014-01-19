@@ -19,7 +19,7 @@ int
 main(void)
 {
   uint16_t ui1, ui2;
-  uint8_t  data[10], rval[10];
+  uint8_t  data[10] = { 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1 }, rval[10];
 
   LCD_init();
   i2cInit();
@@ -36,15 +36,15 @@ main(void)
   LCD_WR_LINE(0, 0, "EEPROM Tests!!!");
   LCD_POS(1, 0);
 
-  data[0] = 0x23;
-  KBD_RESET_KEY;
+//  KBD_RESET_KEY;
   while (1) {
     data[0]++;
-    LCD_POS(1, 0);
-    eepromWriteBytes(0, data, 1);
+    eepromWriteBytes(0, data, 8);
     delayms(500);
+    LCD_POS(1, 0);
     LCD_PUTCH('x');
-    eepromReadBytes(0, rval, 1);
+    eepromReadBytes(0, rval, 8);
+    LCD_PUTCH('y');
     ui2 = (rval[0]>>4) & 0xF;
     LCD_PUTCH(((ui2>9)?'a'-10:'0')+ui2);
     ui2 = rval[0] & 0xF;
