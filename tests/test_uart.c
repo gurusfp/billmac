@@ -49,5 +49,7 @@ main(void)
   }
 #endif
 
+  while (1) {}
+
   return 0;
 }
