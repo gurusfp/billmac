@@ -32,12 +32,13 @@ main(void)
   LCD_WR_LINE(0, 0, "Testing UART!!!");
   delayms(100);
   LCD_POS(1, 0);
-#if 1
+#ifdef TEST_RECEIVER
   ui2 = 0xEE;
-  for (ui3=0; ui3<8; ui3++) {
-    LCD_POS(1, 0);
+  for (ui3=0; ; ui3++) {
     UART_DATA_RECIEVE(ui2);
+    LCD_POS(1, 0);
     LCD_PUT_UINT8X(ui2);
+    delayms(10);
   }
 #else
   ui2 = 0xAA;

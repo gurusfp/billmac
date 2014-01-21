@@ -68,15 +68,10 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
   LCD_cmd(LCD_CMD_CLRSCR);
   LCD_cmd(LCD_CMD_CUR_10);
   lcd_buf_p = (uint8_t*) lcd_buf;
-  for (ui2=0; ui2<LCD_MAX_COL-1; ui2++) {
+  for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
     LCD_wrchar(lcd_buf_p[0]);
     lcd_buf_p++;
   }
-#if 1 /* FIXME: remove the -1 above also with this code */
-  timer0_count++;
-  LCD_wrchar('0'+(timer0_count%10));
-  lcd_buf_p++;
-#endif
   LCD_cmd(LCD_CMD_CUR_20);
   for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
     LCD_wrchar(lcd_buf_p[0]);
@@ -190,7 +185,11 @@ UartSpi_isr(void) __interrupt(SI0_VECTOR)
   DISABLE_ALL_INTERRUPTS;
 
   if (RI) { /* UART Receive */
-    UART_RCV_DATA_PUSH;
+    if (!UART_DATA_BUF_FULL) {
+      UART_RCV_DATA_PUSH;
+    } else {
+      /* FIXME: Error on fast data */
+    }
     RI = 0;
   }
 
