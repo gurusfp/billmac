@@ -118,26 +118,6 @@ KbdScan(void)
 }
 //#pragma restore
 
-void
-KbdGetCh(void)
-{
-  while (1) {
-    if (KbdDataAvail) {
-      return;
-    }
-    /* enter sleep state */
-    PCON = IDL;
-    __asm
-      NOP
-      NOP
-      NOP
-      NOP
-      NOP
-      __endasm;
-    /* Code will reach here only after wakeup */
-  }
-}
-
 uint8_t
 KbdIsShiftPressed(void)
 {

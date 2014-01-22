@@ -32,6 +32,23 @@
 #define KBD_RESET_KEY          \
   KbdDataAvail = 0 ; KbdData = 0xFF
 
+#define KBD_GETCH(val)				\
+  while (1) {					\
+    if (KbdDataAvail) {				\
+      break;					\
+    }						\
+    /* enter sleep state */			\
+    PCON = IDL;					\
+    __asm					\
+      NOP					\
+      NOP					\
+      NOP					\
+      NOP					\
+      NOP					\
+      __endasm;					\
+  }
+  
+
 #define KBD_HIT      (0x0 != KbdDataAvail)
 #define KBD_NOT_HIT  (0x0 == KbdDataAvail)
 
@@ -43,7 +60,6 @@
 void    KbdInit(void);
 void    KbdScan(void);
 uint8_t KbdIsShiftPressed(void);
-void    KbdGetCh(void);
 extern uint8_t KbdData;
 extern __sbit  KbdDataAvail;
 __code const extern uint8_t ps2code2ascii[];

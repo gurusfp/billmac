@@ -11,4 +11,8 @@ void CRC16_Update4Bits(uint8_t val);
   CRC16_Update4Bits( val & 0x0F );   \
 } while (0)
 
+#define rand8(val)				\
+  /* taps: 8 6 5 4; feedback polynomial: x^8 + x^6 + x^5 + x^4 + 1 */	\
+  (val >> 1) | (((val << 7) ^ (val << 5) ^ (val << 4) ^ (val << 2)) & 0x80);
+
 #endif

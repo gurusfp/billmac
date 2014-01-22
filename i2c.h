@@ -103,6 +103,29 @@ uint8_t ds1307Read(uint8_t addr);
   hm[0] = ds1307Read((uint8_t)TIMER_ADDR_HOUR);	\
   ENABLE_ALL_INTERRUPTS
 
+#define timerRamStore1(addr, val)		\
+  DISABLE_ALL_INTERRUPTS;			\
+  ds1307Write((uint8_t)addr, (uint8_t)val);	\
+  ENABLE_ALL_INTERRUPTS
+
+#define timerRamRestore1(addr, val)	\
+  DISABLE_ALL_INTERRUPTS;		\
+  val = ds1307Read((uint8_t)addr);	\
+  ENABLE_ALL_INTERRUPTS
+
+#define timerRamStore2(addr, val)		\
+  DISABLE_ALL_INTERRUPTS;			\
+  ds1307Write((uint8_t)addr, (uint8_t)val);	\
+  ds1307Write((uint8_t)(addr+1), (uint8_t)(val>>8));	\
+  ENABLE_ALL_INTERRUPTS
+
+#define timerRamRestore2(addr, val)	\
+  DISABLE_ALL_INTERRUPTS;		\
+  val = ds1307Read((uint8_t)(addr+1));	\
+  val <<= 8;				\
+  val |= ds1307Read((uint8_t)addr);	\
+  ENABLE_ALL_INTERRUPTS
+
 #define PREV_MONTH(M)       \
   ((M==1) ? 12 : (M-1))
 
