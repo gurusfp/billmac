@@ -90,17 +90,12 @@ __sbit ps2ShiftHit = 0, ps2CtrlHit = 0, ps2AltHit = 0;
 
 #define LENOF_DR 3
 uint8_t DR[LENOF_DR];
+uint8_t transL = 0;
+
 void
 ex0_isr(void) __interrupt(IE0_VECTOR)    /* INT0 P3_2 (Clock) */
 {             /* Data come with Clock from Device to MCU together */
-  static uint8_t KeyData, transL, bitC = 0, drC;
-
-  /* Keep interrupting on -ve, +ve until all transmission */
-  if (1 == IT0) {
-    IT0 = 0;      /* positive enable */
-    return;
-  }
-  IT0 = 1;
+  static uint8_t KeyData, bitC = 0, drC;
 
   /* ------------------------------------- */
   bitC++;
@@ -188,7 +183,7 @@ UartSpi_isr(void) __interrupt(SI0_VECTOR)
     if (!UART_DATA_BUF_FULL) {
       UART_RCV_DATA_PUSH;
     } else {
-      /* FIXME: Error on fast data */
+      /* Data lost/ Error on fast data */
     }
     RI = 0;
   }
