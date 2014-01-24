@@ -41,7 +41,7 @@ uint8_t timer0_count = 0;
 void
 Timer0_isr(void) __interrupt(TF0_VECTOR)
 {
-  uint8_t ui2;
+  uint8_t ui2; uint8_t *ui3_p;
 
   /* all interrupts disable */
   EA  = 0;  ET0 = 0;  TR0 = 0;
@@ -67,15 +67,15 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
   /* Display on LCD */
   LCD_cmd(LCD_CMD_CLRSCR);
   LCD_cmd(LCD_CMD_CUR_10);
-  lcd_buf_p = (uint8_t*) lcd_buf;
+  ui3_p = (uint8_t*) lcd_buf;
   for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
-    LCD_wrchar(lcd_buf_p[0]);
-    lcd_buf_p++;
+    LCD_wrchar(ui3_p[0]);
+    ui3_p++;
   }
   LCD_cmd(LCD_CMD_CUR_20);
   for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
-    LCD_wrchar(lcd_buf_p[0]);
-    lcd_buf_p++;
+    LCD_wrchar(ui3_p[0]);
+    ui3_p++;
   }
   /**************************************************/
   /**************************************************/
