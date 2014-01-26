@@ -17,6 +17,18 @@
 #define DISABLE_ALL_INTERRUPTS        EA  = 0
 #define ENABLE_ALL_INTERRUPTS         EA  = 1
 
+#define SLEEP_UNTIL_NEXT_INTR			\
+     /* enter sleep state */			\
+    PCON = IDL;					\
+    __asm					\
+      NOP					\
+      NOP					\
+      NOP					\
+      NOP					\
+      NOP					\
+      __endasm
+
+
 extern __sbit ps2ShiftHit, ps2CtrlHit, ps2AltHit;
 
 #endif

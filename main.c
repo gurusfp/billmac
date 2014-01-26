@@ -86,7 +86,7 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
   ET0 = 1;  TR0 = 1;  EA  = 1;
 }
 
-__sbit ps2ShiftHit = 0, ps2CtrlHit = 0, ps2AltHit = 0;
+__sbit ps2ShiftHit = 0, ps2CtrlHit = 0, ps2AltHit = 0, ps2CapsHit = 0;
 
 #define LENOF_DR 3
 uint8_t DR[LENOF_DR];

@@ -33,21 +33,10 @@
   KbdDataAvail = 0 ; KbdData = 0xFF
 
 #define KBD_GETCH(val)				\
-  while (1) {					\
-    if (KbdDataAvail) {				\
-      break;					\
-    }						\
-    /* enter sleep state */			\
-    PCON = IDL;					\
-    __asm					\
-      NOP					\
-      NOP					\
-      NOP					\
-      NOP					\
-      NOP					\
-      __endasm;					\
+  while (0 == KbdDataAvail) {			\
+    SLEEP_UNTIL_NEXT_INTR;			\
   }
-  
+
 
 #define KBD_HIT      (0x0 != KbdDataAvail)
 #define KBD_NOT_HIT  (0x0 == KbdDataAvail)

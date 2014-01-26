@@ -155,7 +155,21 @@ void Lcd8_Decimal4(unsigned char com,unsigned int val)
  
 /*********************************LCD HEADER FILE END*************************************/
 
-/* Key definitions */
+#define DISABLE_ALL_INTERRUPTS        EA = 0
+#define ENABLE_ALL_INTERRUPTS         EA = 1
+
+#define SLEEP_UNTIL_NEXT_INTR			\
+     /* enter sleep state */			\
+    PCON = IDL;					\
+    __asm					\
+      NOP					\
+      NOP					\
+      NOP					\
+      NOP					\
+      NOP					\
+      __endasm
+
+/* Key definitions, free to use >127 */
 #define ASCII_UNDEF      0
 #define ASCII_ENTER      0xA0
 #define ASCII_BACKSPACE  0xA1
@@ -166,7 +180,10 @@ void Lcd8_Decimal4(unsigned char com,unsigned int val)
 #define ASCII_RIGHT      0xA5
 #define ASCII_UP         0xA6
 #define ASCII_DOWN       0xA7
- 
+
+#define KBD_RESET_CMD    0xFF
+#define KBD_LED_CMD      0xED
+
 __code const uint8_t
 ps2code2ascii[] = {
   ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '`', ASCII_UNDEF, /* 0-15 */
@@ -179,41 +196,76 @@ ps2code2ascii[] = {
   '0', '.', '2', '5', '6', '8', ASCII_UNDEF, ASCII_NUMLK, ASCII_UNDEF, '+', '3', '-', '*', '9', ASCII_PRNSCRN, ASCII_UNDEF, /* 112-127 */
 };
 
-__code const uint8_t
-ps2code2asciiE0[] = {
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 0-15 */
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 16-31 */
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 32-47 */
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 48-63 */
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, '/', ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 64-79 */
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_ENTER, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 80-95 */
-  ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_LEFT, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 96-111 */
-  ASCII_UNDEF, ASCII_LEFT, ASCII_DOWN, ASCII_UNDEF, ASCII_RIGHT, ASCII_UP, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, ASCII_UNDEF, /* 112-127 */
-};
-
 //PS/2- Keyboard   Pins
 #define KBD_PS2_DATA   P3_6
 #define KBD_PS2_CLK    P3_2
 #define LENOF_DR          3
+#define KBD_RESET_KEY				\
+  KBD_PS2_CLK = 1; EX0 = 1
 
-uint8_t  KbdData;
-__sbit   KbdDataAvail, ps2ShiftHit, ps2CtrlHit, ps2AltHit;
+
+uint8_t  KbdData, KbdTransData;
+__sbit   KbdDataAvail, ps2ShiftHit, ps2CtrlHit, ps2AltHit, ps2CapsHit;
+__sbit   KbdDataTrasmitPend, KbdDataTrasmitInProg, ps2SwitchModified;
 
 uint8_t KeyData, bitC, drC, DR0, DR1, DR2, DR3, transL;
 
 void
+Timer0_isr(void)
+{
+  DISABLE_ALL_INTERRUPTS;
+
+  if ((KbdDataTrasmitPend) && (0 == bitC) && (1 == KBD_PS2_CLK)) {
+    KbdDataTrasmitInProg = 1;
+    KBD_PS2_CLK = 0;
+  }
+
+  ENABLE_ALL_INTERRUPTS;
+}
+
+void
 ex0_isr(void) __interrupt(IE0_VECTOR) /* INT0 P3_2 (Clock) */
 {             /* Data come with Clock from Device to MCU together */
-  EX0 = 0;
+  EX0 = 0; /* FIXME: EX0 need not be altered */
 
-  /* ------------------------------------- */
+  /* next bit to be processed */
   bitC++;
+
+  /* Transmission */
+  if (KbdDataTrasmitInProg) {
+    if ((bitC >=2) && (bitC <= 9)) {
+      KBD_PS2_DATA = (KbdTransData>>(bitC-2)) & 0x1;
+    } else if (10 == bitC) {
+      DR3 = 1;
+      for (DR2=1; DR2; DR2<<=1) {
+	DR3 ^= (KbdTransData & DR2) ? 1 : 0;
+      }
+      KBD_PS2_DATA = DR3;
+    } else if (11 == bitC) {
+      KBD_PS2_DATA = 1; /* ack : we should float the bus */
+    } else if (12 == bitC) { /* transfer complete */
+      KbdDataTrasmitInProg = 0;
+      KbdDataTrasmitPend = 0;
+      bitC = 0;
+    } else if (1 == bitC) {
+      DISABLE_ALL_INTERRUPTS;
+      /* trigger KBD transmission */
+      delayms(10);
+      KBD_PS2_DATA = 0;
+      delayms(100);
+      KBD_PS2_CLK = 1;
+      ENABLE_ALL_INTERRUPTS;
+    }
+    return;
+  }
+
+  /* Reception ------------------------------------- */
   if (11 == bitC) {
     bitC = 0;
     /* disable further transmissions */
     while (0 == KBD_PS2_CLK) {};
     KBD_PS2_CLK = 0;
- } else if (1 == bitC) {
+  } else if (1 == bitC) {
     KeyData = 0;
     transL = 2;
   } else if (10 == bitC) {
@@ -250,26 +302,32 @@ ex0_isr(void) __interrupt(IE0_VECTOR) /* INT0 P3_2 (Clock) */
       if (DR2 == 0x7C) {    /* E0 F0 7C E0 F0 12 */
 	transL = 6;
       } else { /* E0 F0 XX */
-	KeyData = ps2code2asciiE0[KeyData];
-	if (ASCII_UNDEF != KeyData) {
-	  KbdDataAvail = 1;
+	if ( drC >= transL) {
+	  KeyData = (0x4A == KeyData) ? '/' : (0x5A == KeyData) ? ASCII_ENTER :
+	    (0x71 == KeyData) ? ASCII_LEFT : (0x6B == KeyData) ? ASCII_LEFT :
+	    (0x72 == KeyData) ? ASCII_DOWN : (0x74 == KeyData) ? ASCII_RIGHT :
+	    (0x75 == KeyData) ? ASCII_UP : ASCII_UNDEF;
+	  if (ASCII_UNDEF != KeyData) {
+	    KbdData = KeyData;
+	    KbdDataAvail = 1;
+	  }
 	}
       }
     }
   } else if (DR0 == 0xF0) {
     transL = 2;    /* F0 XX */
-    if (2 == drC) { /* Break of normal keys */
-      if ((0x12 == DR0) || (0x59 == DR0))
-	ps2ShiftHit = 0;
-      else if (0x14 == DR0)
-	ps2CtrlHit = 0;
-      else if (0x11 == DR0)
-	ps2AltHit = 0;
+    if (transL <= drC) { /* Break of normal keys */
+      if ((0x12 == DR1) || (0x59 == DR1))
+	ps2ShiftHit = 0, ps2SwitchModified = 0;
+      else if (0x14 == DR1)
+	ps2CtrlHit = 0, ps2SwitchModified = 0;
+      else if (0x11 == DR1)
+	ps2AltHit = 0, ps2SwitchModified = 0;
+      else if (0x58 == DR1)
+	ps2CapsHit = 0, ps2SwitchModified = 1;
       else {
 	KeyData = ps2code2ascii[KeyData];
-	if (ASCII_NUMLK == KeyData) {
-	  /* FIXME: Switch TOGGLE the light */
-	} else if (ASCII_UNDEF != KeyData) {
+        if (ASCII_UNDEF != KeyData) {
 	  KbdData = KeyData;
 	  KbdDataAvail = 1;
 	}
@@ -280,13 +338,17 @@ ex0_isr(void) __interrupt(IE0_VECTOR) /* INT0 P3_2 (Clock) */
   } else {
     /* Make code received, generally no action except for sticky keys */
     transL = 1;
-    if ((0x12 == DR0) || (0x59 == DR0))
-      ps2ShiftHit = 1;
-    else if (0x14 == DR0)
-      ps2CtrlHit = 1;
-    else if (0x11 == DR0)
-      ps2AltHit = 1;
-    /* else if (0xFA == DR0) ACKNOWLEDGEMENT FROM KBD */
+    if (transL <= drC) {
+      if ((0x12 == DR0) || (0x59 == DR0))
+	ps2ShiftHit = 1, ps2SwitchModified = 0;
+      else if (0x14 == DR0)
+	ps2CtrlHit = 1, ps2SwitchModified = 0;
+      else if (0x11 == DR0)
+	ps2AltHit = 1, ps2SwitchModified = 0;
+      else if (0x58 == DR0)
+	ps2CapsHit = 1, ps2SwitchModified = 1;
+      /* else if (0xFA == DR0) ACKNOWLEDGEMENT FROM KBD */
+    }
   }
 
   /* --------------------------------------- */
@@ -302,6 +364,17 @@ ex0_isr(void) __interrupt(IE0_VECTOR) /* INT0 P3_2 (Clock) */
   }
 }
 
+void
+KbdTransmit(uint8_t Data)
+{
+  while (1 == KbdDataTrasmitPend) {
+    SLEEP_UNTIL_NEXT_INTR;
+  }
+  KbdDataTrasmitPend = 1;
+  KbdDataTrasmitInProg = 0;
+  KbdTransData = Data;
+}
+
 void KbdInit()
 {
 //  uint8_t *ui_p = ((uint8_t *)0x8);
@@ -312,11 +385,21 @@ void KbdInit()
   bitC = 0;
   drC = 0;
   KbdDataAvail = 0;
+  KbdDataTrasmitPend = 0;
+  KbdDataTrasmitInProg = 0;
+  ps2SwitchModified = 0;
 
   EX0 = 1;      /* enable INT0 */
-  IT0 = 1;      /* negative enable */
+  IT0 = 1;      /* edge detect */
 
   EA  = 1;
+
+  /* Reset keyboard */
+  KbdTransmit(KBD_RESET_CMD);
+  delayms(100);
+  KbdTransmit(KBD_LED_CMD);
+  delayms(100);
+  KbdTransmit(ps2CapsHit ? 0x04: 0x00);
 }
 
 /***************************/
@@ -345,6 +428,11 @@ void main()
     KbdDataAvail = 0;
     while (0 == KbdDataAvail) {
       delayms(1);
+      if (ps2SwitchModified) {
+	KbdTransmit(KBD_LED_CMD);
+	KbdTransmit(ps2CapsHit ? 0x04: 0x00);
+	ps2SwitchModified = 0;
+      }
       ui1++;
       if (0 == ui1) {
 	Lcd8_hex(First_Line, bitC);
@@ -357,7 +445,7 @@ void main()
 	LCD_wrchar('$');
 	Lcd8_hex(First_Line+12, DR1);
 //	LCD_wrchar('%');
-	ui2 = 0;
+	ui2 &= 0x80;
 	ui2 ^= 0x80;
 	ui3 = KbdDataAvail;
 	ui2 |= (ui3<<0);
@@ -365,8 +453,14 @@ void main()
 	ui2 |= (ui3<<1);
 	ui3 = KBD_PS2_CLK;
 	ui2 |= (ui3<<2);
-	ui3 = EA;
+	ui3 = ps2ShiftHit;
 	ui2 |= (ui3<<3);
+	ui3 = ps2CtrlHit;
+	ui2 |= (ui3<<4);
+	ui3 = ps2AltHit;
+	ui2 |= (ui3<<5);
+	ui3 = ps2CapsHit;
+	ui2 |= (ui3<<6);
 	Lcd8_hex(First_Line+14, ui2);
       }
     }
@@ -375,7 +469,6 @@ void main()
     LCD_wrchar(':');
     LCD_wrchar(KbdData);
     idx += 4;
-    KBD_PS2_CLK = 1;
-    EX0 = 1;
+    KBD_RESET_KEY;
   }
 }
