@@ -132,8 +132,49 @@ typedef struct {
   MENU_MODE(MENU_MRESET) MENU_NAME("Run Diagnost") COL_JOIN MENU_FUNC(menu_RunDiag) COL_JOIN \
     ARG1(MENU_PR_ID, MENU_ITEM_NONE) COL_JOIN ARG2(MENU_PR_ID, MENU_ITEM_NONE)
 
+/* EEPROM Layout would contain
+   SALEandITEM_IN_FLASH : EEPROM_DATA
+   SALEonly_IN_FLASH    : EEPROM_DATA, SALES
+   ITEMonly_IN_FLASH    : EEPROM_DATA, ITEMS
+   nostore_IN_FLASH     : EEPROM_DATA, ITEMS, SALES
+ */
+#if nostore_IN_FLASH
+# define ITEM_DATA_START        sizeof(struct ep_store_layout)
+# define ITEM_DATA_END          (ITEM_DATA_START+(ITEM_MAX*ITEM_SIZEOF))
+# define SALE_DATA_START        ((uint32_t)(ITEM_DATA_START+(ITEM_MAX*ITEM_SIZEOF)))
+# define SALE_DATA_END          EEPROM_ADDR_MAX
+# define ITEM_STORED_IN_EEPROM  1
+# define SALE_STORED_IN_EEPROM  1
+# define ITEM_STORED_IN_FLASH   0
+# define SALE_STORED_IN_FLASH   0
+# define ITEM_READ_BYTE(addr, data) eepromReadBytes(addr, &data, 1)
+# define ITEM_WRITE_BYTE(addr, data) eepromWriteBytes(addr, &data, 1)
+# define  BUFSS_SIZE            64
+#elif ITEMonly_IN_FLASH
+# error "Addr not yet configured"
+# define ITEM_DATA_START        sizeof(struct ep_store_layout)
+# define ITEM_DATA_END          EEPROM_SIZE
+# define ITEM_STORED_IN_EEPROM  0
+# define SALE_STORED_IN_EEPROM  1
+# define ITEM_STORED_IN_FLASH   1
+# define SALE_STORED_IN_FLASH   0
+# define ITEM_READ_BYTE(addr, data) data = FlashReadByte(addr)
+# define ITEM_WRITE_BYTE            FlashWriteByte
+# define  BUFSS_SIZE            FLASH_SECTOR_SIZE
+#elif SALEandITEM_IN_FLASH
+# error "Addr not yet configured"
+# define ITEM_STORED_IN_EEPROM  0
+# define SALE_STORED_IN_EEPROM  0
+# define ITEM_STORED_IN_FLASH   1
+# define SALE_STORED_IN_FLASH   1
+#else
+# error "Not a valid configuration"
+#endif
+
+#define SALE_MAX  ((uint16_t)((SALE_DATA_END-SALE_DATA_START)/(sizeof(sale))))
+
 extern uint8_t menu_error;
-extern __idata uint8_t bufSS[FLASH_SECTOR_SIZE];
+extern __idata uint8_t bufSS[BUFSS_SIZE];
 
 void menu_getopt(uint8_t *prompt, menu_arg_t *arg, uint8_t opt);
 void menu_Billing(uint8_t mode);
@@ -161,16 +202,12 @@ void menu_main(void);
 
 void menu_PrnFullBill(billing *bp);
 
-void flash_item_add(uint8_t* byte_arr);
-void flash_item_delete(uint16_t id);
+void menu_sale_add(uint8_t *sale);
+void menu_sale_delete_month(uint8_t del_month);
+uint16_t menu_sale_find(uint8_t *dmy, uint16_t id);
 
-void flash_sale_add(uint8_t *sale);
-void flash_sale_delete_month(uint8_t del_month);
-uint16_t flash_sale_find(uint8_t *dmy, uint16_t id);
+void menu_sale_free_old_sector(void);
 
-void flash_sale_free_old_sector(void);
-
-#define flash_item_find(id) ((id<ITEM_MAX) ? (FLASH_ITEM_START + (id * ITEM_SIZEOF)) : FLASH_ADDR_INVALID)
-//uint8_t flash_item_valid(id) (id>>3)
+#define menu_item_find(id) ((id<ITEM_MAX) ? (ITEM_DATA_START + (id * ITEM_SIZEOF)) : FLASH_ADDR_INVALID)
 
 #endif

@@ -1,17 +1,19 @@
 #ifndef EP_STORE_H
 #define EP_STORE_H
 
-#define EEPROM_DYNARR_MAX    8
 #define HEADER_MAX_SZ       54
 #define SHOP_NAME_SZ        16
 #define FOOTER_MAX_SZ       24
-#define MOD_HIS_SZ          15
-#define NUM_TESTING_BYTES    3
+#define MOD_HIS_SZ          10
+#define MAX_DAYS_SALE       40
+#define EEPROM_MAX_SIGS      8
 
-/* Available : 8K : 8192 */
+#define USER_CHOICE_PRINT    (1<<0)
+
+/* Available : 1K : 1024 */
 struct ep_store_layout {
   uint8_t   item_mod_his_ptr;       /*             1 */
-  item      item_mod_his[MOD_HIS_SZ]; /* 20*12=  240 */
+  item      item_mod_his[MOD_HIS_SZ]; /* 20*10=  200 */
 
   /* sale constants */
   uint16_t  sale_start;             /*             2 */
@@ -23,37 +25,30 @@ struct ep_store_layout {
      max items = 64*8 = 512
    */
   uint16_t  item_last_modified;     /*             2 */
-  uint16_t  item_count;             /*             2 */ /* 319 */
-
-  /* */
-  uint16_t  sale_date_ptr[12*4];    /*            96 */
-  uint16_t  sale_date_old_ptr[1*4]; /*             8 */
-  uint8_t   sale_date_old_ptr_month;/*             1 */ /* 424 */
-
-  /* User choices */
-  uint8_t   print_it;               /*             1 */
-
-  /* Have count of # of bill printed/ day */
-  uint16_t  date_month;             /*             2 */
-  uint16_t  bill_id[EEPROM_DYNARR_MAX];  /*       16 */ /* 443 */
-
-  /* banners */
-  uint8_t   shop_name [SHOP_NAME_SZ];  /*         16 */
-  uint8_t   prn_header[HEADER_MAX_SZ]; /*         54 */
-  uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */ /* 537 */
+  uint16_t  item_count;             /*             2 */ /* */
 
   /* */
   uint16_t   passwd;                /*             2 */
 
-  /* integrity : 'corrupted' should be left at 0 and
-     written with random value to invalidate the sig
-   */
-  uint8_t   corrupted;              /*             1 */
-  uint8_t   eeprom_idx;             /*             1 */
-  uint16_t  eeprom_sig[EEPROM_DYNARR_MAX]; /*     16 */
+  /* User choices */
+  uint8_t   user_choice;            /*             1 */
 
-  /* used for testing purposes */
-  uint8_t   testing[NUM_TESTING_BYTES]; /*         3 */ /* 560 */
+  /* banners */
+  uint8_t   shop_name [SHOP_NAME_SZ];  /*         16 */
+  uint8_t   prn_header[HEADER_MAX_SZ]; /*         54 */
+  uint8_t   prn_footer[FOOTER_MAX_SZ]; /*         24 */ /* */
+
+  /* Store date and start id sale array */
+  uint16_t  sale_start;
+  uint16_t  sale_end;
+  uint16_t  dmy[MAX_DAYS_SALE];        /*          2 */
+  uint16_t  sales_idx[MAX_DAYS_SALE];  /*         96 */
+  uint16_t  next_sale_idx;             /*          2 */
+  uint16_t  num_sale_idx_free;         /*          2 */
+
+  /* Store signature to depend on EEPROM_DATA */
+  uint8_t   eeprom_idx;                   /*       1 */
+  uint16_t  eeprom_sig[EEPROM_MAX_SIGS];  /*      16 */
 };                                  /* Total  =  500 */
 
 #define EEPROM_DATA               (*((struct ep_store_layout *)0))
@@ -63,6 +58,7 @@ struct ep_store_layout {
     eepromWriteBytes(A, B, C);						\
     EEPROM_STORE_WRITE_Sig						\
   }
+#define EEPROM_MAX_ADDR        (EEPROM_SIZE*EEPROM_HOWMANY)
 
 #define EEPROM_STORE_WRITE_Sig {					\
     uint16_t ui1;	uint8_t ui2, eeprom_idx;			\

@@ -28,7 +28,7 @@ void expect_else_assert(const char *s, const char *f, const uint32_t l);
 #define  assert(X)
 #endif
 
-#define ERROR(msg) { }
+#define ERROR(msg) { /*FIXME: flash error message*/ }
 
 #endif
 

@@ -46,6 +46,11 @@ typedef struct _sale_info {
 #define SALE_INFO_BYTE_NITEM_SHIFT  4
 
 typedef struct {
+  sale_info info;                        /*         4 */
+  sale_item items[MAX_ITEMS_IN_BILL]     /* 2*16 = 32 */
+} sale;                                  /* Tot  = 36 */
+
+typedef struct {
   uint8_t   vat_sel:2;
   uint8_t   has_serv_tax:1;
   uint8_t   unused:5;
@@ -66,7 +71,6 @@ typedef struct {
 
 /* constants */
 #define ITEM_SIZEOF       sizeof(item)
-#define ITEM_MAX          ((FLASH_ITEM_END-FLASH_ITEM_START)/sizeof(item))
 #define SALE_INFO_SIZEOF  sizeof(sale_info)
 #define SALE_SIZEOF       sizeof(sale_item)
 

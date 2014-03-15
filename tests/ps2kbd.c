@@ -211,7 +211,7 @@ __sbit   KbdDataTrasmitPend, KbdDataTrasmitInProg, ps2SwitchModified;
 uint8_t KeyData, bitC, drC, DR0, DR1, DR2, DR3, transL;
 
 void
-Timer0_isr(void)
+Timer0_isr(void) __interrupt(TF0_VECTOR)
 {
   DISABLE_ALL_INTERRUPTS;
 
@@ -389,10 +389,17 @@ void KbdInit()
   KbdDataTrasmitInProg = 0;
   ps2SwitchModified = 0;
 
+  TMOD |= 0x1;  /* T0:Mode_1 */
+  TR0 = 1;      /* T0Run, IE */
+  ET0 = 1;      /* Enable Timer0 intrs */
+
+  /* interrupt priority : EX0 is first */
+  IP0 = 1;
+
   EX0 = 1;      /* enable INT0 */
   IT0 = 1;      /* edge detect */
 
-  EA  = 1;
+//  EA  = 1;
 
   /* Reset keyboard */
   KbdTransmit(KBD_RESET_CMD);
@@ -411,7 +418,7 @@ void main()
   uint8_t ui1, ui2, ui3;
 
   Lcd8_Init();
-  KbdInit();
+//  KbdInit();
   Lcd8_Display(0x80, "PS2 TESTING:    ",16);
   delayms(100);delayms(100);
   LCD_cmd(0x01);

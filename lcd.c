@@ -42,8 +42,9 @@ LCD_init(void)
 
   /* Entry mode, auto increment with no shift */
   LCD_cmd(LCD_CMD_INC_CUR);
-
   delayms(100);
+
+  lcd_buf_prop = 0;
 }
 
 #ifdef LCD_MAIN

@@ -74,7 +74,11 @@ Timer0_isr(void) __interrupt(TF0_VECTOR)
   }
   LCD_cmd(LCD_CMD_CUR_20);
   for (ui2=0; ui2<LCD_MAX_COL; ui2++) {
-    LCD_wrchar(ui3_p[0]);
+    if ((lcd_buf_prop & LCD_PROP_NOECHO_L2) && (' ' != ui3_p[0]))
+      LCD_wrchar('*');
+    else {
+      LCD_wrchar(ui3_p[0]);
+    }
     ui3_p++;
   }
   /**************************************************/

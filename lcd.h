@@ -4,8 +4,6 @@
 #define LCD_MAX_ROW            2
 #define LCD_MAX_COL           16
 
-#define LCD_DPORT_SIZE         4
-
 #if 8 == LCD_DPORT_SIZE
 # define LCD_PORT  P1
 # define LCD_rs    P2_0
@@ -20,7 +18,7 @@
 # define LCD_rs    P2_0
 #endif
 
-#define LCD_PROP_NOECHO_L2      1
+#define LCD_PROP_NOECHO_L2  (1<<0)
 #define LCD_PROP_DIRTY      (1<<1)
 
 #ifdef  UNIT_TEST
